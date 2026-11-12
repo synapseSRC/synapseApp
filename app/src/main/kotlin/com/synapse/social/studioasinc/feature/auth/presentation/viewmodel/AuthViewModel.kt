@@ -457,33 +457,5 @@ class AuthViewModel @Inject constructor(
         usernameCheckJob?.cancel()
     }
 
-    fun onSubmitNewPassword() {
-        val state = _uiState.value as? AuthUiState.ResetPassword ?: return
 
-        val validation = validateNewPasswordUseCase(state.password, state.confirmPassword)
-
-        if (!validation.isValid) {
-            val errors = mutableMapOf<AuthField, String?>()
-            validation.passwordError?.let { errors[AuthField.PASSWORD] = it }
-            validation.confirmPasswordError?.let { errors[AuthField.CONFIRM_PASSWORD] = it }
-            _uiState.value = state.copy(validationErrors = errors)
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true)
-            resetPasswordUseCase(state.password).fold(
-                onSuccess = {
-                    _uiState.value = state.copy(isLoading = false)
-                    _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn)
-                },
-                onFailure = { error ->
-                    _uiState.value = state.copy(
-                        isLoading = false,
-                        validationErrors = mapOf(AuthField.PASSWORD to error.message)
-                    )
-                }
-            )
-        }
-    }
 }
