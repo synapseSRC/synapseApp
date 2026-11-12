@@ -1,7 +1,14 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @StateObject private var viewModel = ProfileViewModel()
+    let userId: String?
+
+    @StateObject private var viewModel: ProfileViewModel
+
+    init(userId: String? = nil) {
+        self.userId = userId
+        _viewModel = StateObject(wrappedValue: ProfileViewModel(userId: userId))
+    }
 
     var body: some View {
         NavigationView {

@@ -49,7 +49,7 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { navigator.navigate(to: .profile, on: .home) }) {
+                    Button(action: { navigator.navigate(to: .profile(userId: nil), on: .home) }) {
                         Image(systemName: "person.crop.circle")
                             .font(.system(size: 24))
                     }
@@ -65,8 +65,8 @@ struct HomeView: View {
                 switch route {
                 case .settings:
                     SettingsView()
-                case .profile:
-                    ProfileView()
+                case .profile(let userId):
+                    ProfileView(userId: userId)
                 case .create:
                     CreateView()
                 case .postDetail(let postId):
