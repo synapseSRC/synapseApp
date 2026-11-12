@@ -67,6 +67,8 @@ private fun EmptyFavouritesCard() {
 fun FavouritesScreen(
     onBackClick: () -> Unit
 ) {
+    var showFavouritesInChatList by remember { mutableStateOf(true) }
+    var showFavouriteBadge by remember { mutableStateOf(true) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -106,21 +108,21 @@ fun FavouritesScreen(
                         subtitle = stringResource(R.string.select_contacts_favourites),
                         imageVector = Icons.Filled.Add,
                         position = SettingsItemPosition.Top,
-                        onClick = { }
+                        onClick = null
                     )
                     SettingsNavigationItem(
                         title = stringResource(R.string.reorder_favourites),
                         subtitle = stringResource(R.string.change_order_favourites),
                         imageVector = Icons.Filled.Reorder,
                         position = SettingsItemPosition.Middle,
-                        onClick = { }
+                        onClick = null
                     )
                     SettingsNavigationItem(
                         title = stringResource(R.string.remove_from_favourites),
                         subtitle = stringResource(R.string.remove_contacts_favourites),
                         imageVector = Icons.Filled.Delete,
                         position = SettingsItemPosition.Bottom,
-                        onClick = { }
+                        onClick = null
                     )
                 }
             }
@@ -131,16 +133,16 @@ fun FavouritesScreen(
                         title = stringResource(R.string.show_favourites_chat_list),
                         subtitle = stringResource(R.string.display_favourite_contacts_top),
                         imageVector = Icons.AutoMirrored.Filled.Chat,
-                        checked = true,
-                        onCheckedChange = { },
+                        checked = showFavouritesInChatList,
+                        onCheckedChange = { showFavouritesInChatList = it },
                         position = SettingsItemPosition.Top
                     )
                     SettingsToggleItem(
                         title = stringResource(R.string.show_favourite_badge),
                         subtitle = stringResource(R.string.display_star_icon),
                         imageVector = Icons.Filled.Favorite,
-                        checked = true,
-                        onCheckedChange = { },
+                        checked = showFavouriteBadge,
+                        onCheckedChange = { showFavouriteBadge = it },
                         position = SettingsItemPosition.Bottom
                     )
                 }
