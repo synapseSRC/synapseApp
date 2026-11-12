@@ -35,8 +35,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.OutlinedTextField
@@ -260,30 +258,6 @@ fun InterestsSkillsScreen(
                                             verticalArrangement = Arrangement.spacedBy(Spacing.space8)
                                         ) {
                                             uiState.interests.forEachIndexed { index, interest ->
-                                                InputChip(
-                                                    selected = false,
-                                                    onClick = {},
-                                                    label = { Text(text = interest) },
-                                                    trailingIcon = {
-                                                        IconButton(
-                                                            onClick = { viewModel.onEvent(InterestsSkillsEvent.RemoveInterest(index)) },
-                                                            modifier = Modifier.size(24.dp)
-                                                        ) {
-                                                            Icon(
-                                                                imageVector = Icons.Filled.Close,
-                                                                contentDescription = stringResource(
-                                                                    R.string.remove_interest_content_description,
-                                                                    interest
-                                                                ),
-                                                                modifier = Modifier.size(16.dp)
-                                                            )
-                                                        }
-                                                    },
-                                                    colors = InputChipDefaults.inputChipColors(
-                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                )
                                             }
                                         }
 
