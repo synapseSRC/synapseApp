@@ -5,7 +5,7 @@ enum AppRoute: Hashable {
     case search
     case create
     case notifications
-    case profile
+    case profile(userId: String?)
     case settings
     case login
     case register
@@ -48,7 +48,7 @@ class AppNavigator: ObservableObject {
             createPath.append(route)
         case .notifications:
             notificationsPath.append(route)
-        case .profile:
+        case .profile(let userId):
             profilePath.append(route)
         }
     }
@@ -70,7 +70,7 @@ class AppNavigator: ObservableObject {
             if !createPath.isEmpty { createPath.removeLast() }
         case .notifications:
             if !notificationsPath.isEmpty { notificationsPath.removeLast() }
-        case .profile:
+        case .profile(let userId):
             if !profilePath.isEmpty { profilePath.removeLast() }
         }
     }
