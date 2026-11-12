@@ -52,7 +52,7 @@ fun AuthScreen(
                 navController.navigate("emailVerification/$encodedEmail")
             }
             is AuthNavigationEvent.NavigateToForgotPassword -> navController.navigate("forgotPassword")
-            is AuthNavigationEvent.NavigateToResetPassword -> navController.navigate("resetPassword")
+            is AuthNavigationEvent.NavigateToResetPassword -> navController.navigate("resetPassword?token=${event.token}")
             is AuthNavigationEvent.NavigateBack -> navController.popBackStack()
             is AuthNavigationEvent.OpenUrl -> IntentUtils.openUrl(context, event.url)
             is AuthNavigationEvent.InitiateGoogleSignIn -> {
@@ -149,9 +149,17 @@ fun AuthScreen(
                 )
             }
 
-            composable("resetPassword") {
+            composable(
+                route = "resetPassword",
+                arguments = listOf(navArgument("token") { type = androidx.navigation.NavType.StringType })
+            ) { backStackEntry ->
+                val token = backStackEntry.arguments?.getString("token") ?: ""
                 val viewModel = hiltViewModel<ResetPasswordViewModel>()
                 val state by viewModel.uiState.collectAsState()
+
+                LaunchedEffect(token) {
+                    viewModel.setResetToken(token)
+                }
 
                 LaunchedEffect(Unit) {
                     viewModel.navigationEvent.collect { handleNavigationEvent(it) }
