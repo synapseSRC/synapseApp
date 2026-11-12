@@ -27,6 +27,12 @@ class ResetPasswordViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.ResetPassword())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
+    private var resetToken: String = ""
+
+    fun setResetToken(token: String) {
+        resetToken = token
+    }
+
     private val _navigationEvent = MutableSharedFlow<AuthNavigationEvent>()
     val navigationEvent: SharedFlow<AuthNavigationEvent> = _navigationEvent.asSharedFlow()
 
@@ -58,7 +64,7 @@ class ResetPasswordViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true, generalError = null)
-            resetPasswordUseCase(state.password).fold(
+            resetPasswordUseCase(state.password, resetToken).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false)
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn)
