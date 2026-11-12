@@ -262,7 +262,7 @@ fun InterestsSkillsScreen(
                                             uiState.interests.forEachIndexed { index, interest ->
                                                 InputChip(
                                                     selected = false,
-                                                    onClick = {},
+                                                    onClick = null,
                                                     label = { Text(text = interest) },
                                                     trailingIcon = {
                                                         IconButton(
