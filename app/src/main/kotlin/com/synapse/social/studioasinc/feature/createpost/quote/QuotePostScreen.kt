@@ -83,13 +83,14 @@ fun QuotePostScreen(
                 modifier = Modifier.padding(Spacing.space16)
             )
 
-            if (state.isLoading && state.post == null) {
+            val post = state.post
+            if (state.isLoading && post == null) {
                 Box(modifier = Modifier.fillMaxWidth().padding(Spacing.space32), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            } else if (state.post != null) {
+            } else if (post != null) {
                 QuotedPostCard(
-                    quotedPost = state.post,
+                    quotedPost = post,
                     modifier = Modifier.padding(horizontal = Spacing.space16)
                 )
             }
