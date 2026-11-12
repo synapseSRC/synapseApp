@@ -60,10 +60,7 @@ class DesktopChatViewModel(
         val afterFilter = when (filter) {
             ConversationFilter.ALL -> conversations
             ConversationFilter.UNREAD -> conversations.filter { it.unreadCount > 0 }
-            ConversationFilter.FAVOURITES -> {
-                // TODO: implement FAVOURITES filter once stored on domain model
-                conversations
-            }
+            ConversationFilter.FAVOURITES -> conversations.filter { it.isPinned }
         }
         if (query.isBlank()) {
             afterFilter

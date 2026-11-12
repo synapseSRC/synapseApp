@@ -136,7 +136,7 @@ fun AppearanceScreen(
                         subtitle = stringResource(R.string.appearance_font_size_subtitle),
                         value = viewModel.getSliderValueFromFontScale(appearanceSettings.fontScale),
                         valueRange = 0f..3f,
-                        steps = 2,
+                        steps = 3,
                         onValueChange = { value ->
                             val scale = viewModel.getFontScaleFromSliderValue(value)
                             viewModel.setFontScale(scale)
