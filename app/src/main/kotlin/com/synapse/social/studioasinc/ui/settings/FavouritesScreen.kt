@@ -106,21 +106,21 @@ fun FavouritesScreen(
                         subtitle = stringResource(R.string.select_contacts_favourites),
                         imageVector = Icons.Filled.Add,
                         position = SettingsItemPosition.Top,
-                        onClick = { }
+                        onClick = null
                     )
                     SettingsNavigationItem(
                         title = stringResource(R.string.reorder_favourites),
                         subtitle = stringResource(R.string.change_order_favourites),
                         imageVector = Icons.Filled.Reorder,
                         position = SettingsItemPosition.Middle,
-                        onClick = { }
+                        onClick = null
                     )
                     SettingsNavigationItem(
                         title = stringResource(R.string.remove_from_favourites),
                         subtitle = stringResource(R.string.remove_contacts_favourites),
                         imageVector = Icons.Filled.Delete,
                         position = SettingsItemPosition.Bottom,
-                        onClick = { }
+                        onClick = null
                     )
                 }
             }
