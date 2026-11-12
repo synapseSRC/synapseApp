@@ -39,6 +39,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostI
 import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
 import com.synapse.social.studioasinc.feature.shared.sharepost.SharePostSheetViewModel
 import com.synapse.social.studioasinc.feature.shared.sharepost.ShareToChatSheet
