@@ -152,7 +152,7 @@ fun AuthScreen(
 
             composable(
                 route = "resetPassword",
-                arguments = listOf(navArgument("token") { type = androidx.navigation.NavType.StringType })
+                arguments = listOf(androidx.navigation.navArgument("token") { type = androidx.navigation.NavType.StringType })
             ) { backStackEntry ->
                 val token = backStackEntry.arguments?.getString("token") ?: ""
                 val viewModel = hiltViewModel<ResetPasswordViewModel>()
