@@ -76,9 +76,9 @@ fun HashtagFeedScreen(
                             PostActions(
                                 onLike = { p -> viewModel.reactToPost(p, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
                                 onComment = { p -> onNavigateToPost(p.rootPostId ?: p.inReplyToPostId ?: p.id, if (p.rootPostId != null || p.inReplyToPostId != null) p.id else null) },
-                                onShare = { },
-                                onRepost = { },
-                                onQuote = { },
+                                onShare = { post -> PostShareUtils.sharePost(context, post.id) },
+                                onRepost = viewModel::resharePost,
+                                onQuote = { post -> viewModel.quotePost(post, "") },
                                 onBookmark = viewModel::bookmarkPost,
                                 onOptionClick = { post -> selectedPost = post },
                                 onPollVote = viewModel::votePoll,

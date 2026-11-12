@@ -11,6 +11,8 @@ import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCa
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetPostsByHashtagUseCase
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.QuotePostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.reaction.PopulatePostReactionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +38,8 @@ class HashtagFeedViewModel @Inject constructor(
     private val deletePostUseCase: DeletePostUseCase,
     private val populatePostPollsUseCase: PopulatePostPollsUseCase,
     private val populatePostReactionsUseCase: PopulatePostReactionsUseCase,
+    private val repostPostUseCase: RepostPostUseCase,
+    private val quotePostUseCase: QuotePostUseCase,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -135,6 +139,28 @@ class HashtagFeedViewModel @Inject constructor(
                 }.onFailure { e ->
                     _uiState.update { it.copy(error = e.message) }
                 }
+            }
+        }
+    }
+
+    fun resharePost(post: Post) {
+        viewModelScope.launch {
+            val result = repostPostUseCase(post.id)
+            result.onSuccess {
+                // Repost succeeded
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message ?: "Failed to repost") }
+            }
+        }
+    }
+
+    fun quotePost(post: Post, text: String) {
+        viewModelScope.launch {
+            val result = quotePostUseCase(post.id, text)
+            result.onSuccess {
+                // Quote created
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message ?: "Failed to quote post") }
             }
         }
     }
