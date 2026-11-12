@@ -90,8 +90,8 @@ fun StoryPagerScreen(
                         }
                     },
                     onClose = onClose,
-                    onNavigateToProfile = onNavigateToProfile,
                     viewModel = viewModel,
+                    onNavigateToProfile = onNavigateToProfile,
                     isActive = pagerState.currentPage == pageIndex && !pagerState.isScrollInProgress
                 )
 

@@ -150,8 +150,8 @@ fun StoryReplyBar(
 fun StoryViewerScreen(
     onFinished: () -> Unit,
     onClose: () -> Unit,
-    onNavigateToProfile: (String) -> Unit = {},
     viewModel: StoryViewerViewModel,
+    onNavigateToProfile: (String) -> Unit = {},
     isActive: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
