@@ -151,7 +151,8 @@ fun StoryViewerScreen(
     onFinished: () -> Unit,
     onClose: () -> Unit,
     viewModel: StoryViewerViewModel,
-    isActive: Boolean = true
+    isActive: Boolean = true,
+    onNavigateToProfile: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -342,7 +343,9 @@ fun StoryViewerScreen(
                         viewers = uiState.viewers,
                         isLoading = uiState.isLoadingViewers,
                         onDismiss = { viewModel.hideViewersSheet() },
-                        onUserClick = { /* no-op for now */ }
+                        onUserClick = { user ->
+                            onNavigateToProfile(user.id ?: user.uid)
+                        }
                     )
                 }
 

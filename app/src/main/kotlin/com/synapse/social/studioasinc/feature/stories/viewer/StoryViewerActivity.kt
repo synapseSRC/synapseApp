@@ -3,6 +3,7 @@ package com.synapse.social.studioasinc.feature.stories.viewer
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
+import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.shared.theme.SynapseTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -26,7 +27,8 @@ class StoryViewerActivity : AppCompatActivity() {
                 StoryPagerScreen(
                     userIds = userIds,
                     initialIndex = initialIndex,
-                    onClose = { finish() }
+                    onClose = { finish() },
+                    onNavigateToProfile = { userId -> IntentUtils.openUrl(this, "synapse://profile/$userId") }
                 )
             }
         }
