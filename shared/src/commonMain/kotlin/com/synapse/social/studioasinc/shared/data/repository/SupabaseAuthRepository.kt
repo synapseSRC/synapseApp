@@ -359,7 +359,7 @@ class SupabaseAuthRepository(
      * from the reset link. It is imported as the current session so `updateUser` is authorized
      * even though the user is not signed in with a regular session.
      */
-    override suspend fun updatePassword(password: String, resetToken: String = ""): Result<Unit> {
+    override suspend fun updatePassword(password: String, resetToken: String): Result<Unit> {
         return try {
             withContext(AppDispatchers.IO) {
                 if (resetToken.isNotEmpty()) {
