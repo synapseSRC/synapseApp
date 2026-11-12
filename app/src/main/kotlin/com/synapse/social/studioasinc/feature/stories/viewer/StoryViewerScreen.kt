@@ -334,7 +334,8 @@ fun StoryViewerScreen(
                         storyTime = currentStory.createdAt,
                         expiresAt = currentStory.expiresAt,
                         onClose = onClose,
-                        onMore = { viewModel.showOptionsSheet() }
+                        onMore = { viewModel.showOptionsSheet() },
+                        onUserClick = { uiState.user?.uid?.let { onNavigateToProfile(it) } }
                     )
                 }
 
@@ -530,6 +531,7 @@ fun StoryUserHeader(
     storyTime: String?,
     onClose: () -> Unit,
     onMore: () -> Unit = {},
+    onUserClick: () -> Unit = {},
     expiresAt: String? = null
 ) {
     Row(
@@ -543,7 +545,9 @@ fun StoryUserHeader(
             modifier = Modifier
                 .size(Sizes.IconHuge)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable { onUserClick() }
+                .semantics { contentDescription = stringResource(R.string.view_profile) },
             contentAlignment = Alignment.Center
         ) {
             if (user?.avatar != null) {
