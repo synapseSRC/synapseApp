@@ -19,7 +19,8 @@ class SettingsViewModel: ObservableObject {
     }
 
     func loadPreferences() async {
-        guard let userId = currentUid, !userId.isEmpty else {
+        let userId = currentUid
+        guard !userId.isEmpty else {
             logger.warning("Cannot load preferences: no authenticated user ID")
             return
         }
