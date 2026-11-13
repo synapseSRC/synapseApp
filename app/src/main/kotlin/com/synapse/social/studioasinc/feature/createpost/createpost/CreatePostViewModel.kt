@@ -619,6 +619,12 @@ class CreatePostViewModel @Inject constructor(
                 )
 
                 result.onSuccess { posts ->
+                    _uiState.update { s ->
+                        s.copy(
+                            isLoading = false,
+                            isPostCreated = true
+                        )
+                    }
                     val post = posts.firstOrNull()
                     clearDraft()
                     if (post != null) {
