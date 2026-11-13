@@ -376,7 +376,12 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         try {
             client.realtime.connect()
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            if (e !is CancellationException) {
+                Napier.e("Failed to connect realtime for roster", e, tag = "Realtime")
+                close(e)
+            }
+        }
 
         val channel = client.realtime.channel(channelId)
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
@@ -558,7 +563,12 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         try {
             client.realtime.connect()
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            if (e !is CancellationException) {
+                Napier.e("Failed to connect realtime for read receipts", e, tag = "Realtime")
+                close(e)
+            }
+        }
 
         val channel = client.realtime.channel(channelId)
         val flow = channel.postgresChangeFlow<PostgresAction.Update>(schema = "public") {
@@ -574,7 +584,10 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                     try {
                         val message = action.decodeRecord<MessageDto>()
                         send(message)
-                    } catch (e: Exception) {}
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        Napier.e("Error decoding read receipt", e, tag = "Realtime")
+                    }
                 }
         }
 
@@ -612,7 +625,12 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
 
         try {
             client.realtime.connect()
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            if (e !is CancellationException) {
+                Napier.e("Failed to connect realtime for reactions", e, tag = "Realtime")
+                close(e)
+            }
+        }
 
         val channel = client.realtime.channel(channelId)
         val flow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
@@ -626,12 +644,21 @@ internal class ChatRealtimeDataSource(private val client: SupabaseClientLib) {
                 .onStart { subscriptionReady.complete(Unit) }
                 .collect { action ->
                     when (action) {
-                        is PostgresAction.Insert -> try { send(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
-                        is PostgresAction.Update -> try { send(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {}
+                        is PostgresAction.Insert -> try { send(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {
+                            if (e is CancellationException) throw e
+                            Napier.e("Error decoding message reaction insert", e, tag = "Realtime")
+                        }
+                        is PostgresAction.Update -> try { send(action.decodeRecord<MessageReactionDto>()) } catch(e: Exception) {
+                            if (e is CancellationException) throw e
+                            Napier.e("Error decoding message reaction update", e, tag = "Realtime")
+                        }
                         is PostgresAction.Delete -> try {
                             val oldRecord = action.decodeOldRecord<MessageReactionDto>()
                             send(oldRecord.copy(isDeleteEvent = true))
-                        } catch(e: Exception) {}
+                        } catch(e: Exception) {
+                            if (e is CancellationException) throw e
+                            Napier.e("Error decoding message reaction delete", e, tag = "Realtime")
+                        }
                         else -> {}
                     }
                 }
