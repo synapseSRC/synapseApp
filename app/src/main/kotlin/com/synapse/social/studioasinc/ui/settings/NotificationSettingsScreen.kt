@@ -268,9 +268,9 @@ private fun SystemSecuritySection(
             imageVector = Icons.Default.Info,
             title = stringResource(R.string.settings_security_alerts_title),
             subtitle = stringResource(R.string.settings_security_alerts_subtitle),
-            checked = true,
-            onCheckedChange = { },
-            enabled = false,
+            checked = notificationPreferences.securityEnabled,
+            onCheckedChange = { onToggleCategory(NotificationCategory.SECURITY_ALERTS, it) },
+            enabled = notificationPreferences.globalEnabled,
             position = SettingsItemPosition.Top
         )
         SettingsToggleItem(
