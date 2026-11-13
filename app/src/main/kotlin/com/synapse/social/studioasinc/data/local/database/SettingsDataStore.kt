@@ -83,6 +83,10 @@ class SettingsDataStore private constructor(
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_MENTIONS)
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_GLOBAL)
             preferences.remove(SettingsConstants.KEY_IN_APP_NOTIFICATIONS)
+            preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_REPLIES)
+            preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_NEW_POSTS)
+            preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_SHARES)
+            preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_SYSTEM_UPDATES)
 
             preferences.remove(SettingsConstants.KEY_SOUND_EFFECTS_MASTER)
             preferences.remove(SettingsConstants.KEY_SOUND_MESSAGE_TONES)
@@ -161,6 +165,10 @@ class SettingsDataStore private constructor(
             preferences[SettingsConstants.KEY_NOTIFICATIONS_MENTIONS] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
             preferences[SettingsConstants.KEY_NOTIFICATIONS_GLOBAL] = SettingsConstants.DEFAULT_NOTIFICATIONS_GLOBAL
             preferences[SettingsConstants.KEY_IN_APP_NOTIFICATIONS] = SettingsConstants.DEFAULT_IN_APP_NOTIFICATIONS_ENABLED
+            preferences[SettingsConstants.KEY_NOTIFICATIONS_REPLIES] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
+            preferences[SettingsConstants.KEY_NOTIFICATIONS_NEW_POSTS] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
+            preferences[SettingsConstants.KEY_NOTIFICATIONS_SHARES] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
+            preferences[SettingsConstants.KEY_NOTIFICATIONS_SYSTEM_UPDATES] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
 
             preferences[SettingsConstants.KEY_READ_RECEIPTS_ENABLED] = SettingsConstants.DEFAULT_READ_RECEIPTS_ENABLED
             preferences[SettingsConstants.KEY_TYPING_INDICATORS_ENABLED] = SettingsConstants.DEFAULT_TYPING_INDICATORS_ENABLED

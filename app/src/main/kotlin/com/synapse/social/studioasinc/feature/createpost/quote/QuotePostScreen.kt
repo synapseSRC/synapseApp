@@ -31,6 +31,9 @@ fun QuotePostScreen(
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
+            state.post?.let { post ->
+                onNavigateToPost(post.id, null)
+            }
             onNavigateBack()
         }
     }

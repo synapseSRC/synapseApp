@@ -191,6 +191,7 @@ internal fun PostOptionsSection(
             },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
+                Result.success(Unit)
             },
             onRevokeVote = {
                 Toast.makeText(context, context.getString(R.string.toast_revoke_vote_impl), Toast.LENGTH_SHORT).show()

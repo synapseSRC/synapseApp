@@ -9,11 +9,13 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.data.repository.SettingsRepository
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.AppColors
@@ -65,10 +67,12 @@ private fun EmptyFavouritesCard() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    settingsRepository: SettingsRepository
 ) {
-    var showFavouritesInChatList by remember { mutableStateOf(true) }
-    var showFavouriteBadge by remember { mutableStateOf(true) }
+    val showFavouritesInChatList by settingsRepository.showFavouritesInChatList.collectAsState()
+    val showFavouriteBadge by settingsRepository.showFavouriteBadge.collectAsState()
+    val scope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -134,7 +138,11 @@ fun FavouritesScreen(
                         subtitle = stringResource(R.string.display_favourite_contacts_top),
                         imageVector = Icons.AutoMirrored.Filled.Chat,
                         checked = showFavouritesInChatList,
-                        onCheckedChange = { showFavouritesInChatList = it },
+                        onCheckedChange = {
+                            scope.launch {
+                                settingsRepository.setShowFavouritesInChatList(it)
+                            }
+                        },
                         position = SettingsItemPosition.Top
                     )
                     SettingsToggleItem(
@@ -142,7 +150,11 @@ fun FavouritesScreen(
                         subtitle = stringResource(R.string.display_star_icon),
                         imageVector = Icons.Filled.Favorite,
                         checked = showFavouriteBadge,
-                        onCheckedChange = { showFavouriteBadge = it },
+                        onCheckedChange = {
+                            scope.launch {
+                                settingsRepository.setShowFavouriteBadge(it)
+                            }
+                        },
                         position = SettingsItemPosition.Bottom
                     )
                 }

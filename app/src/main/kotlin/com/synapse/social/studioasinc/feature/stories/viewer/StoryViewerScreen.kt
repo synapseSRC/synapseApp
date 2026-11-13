@@ -347,7 +347,7 @@ fun StoryViewerScreen(
                         isLoading = uiState.isLoadingViewers,
                         onDismiss = { viewModel.hideViewersSheet() },
                         onUserClick = { user ->
-                            onNavigateToProfile(user.id ?: user.uid)
+                            onNavigateToProfile(user.uid)
                         }
                     )
                 }

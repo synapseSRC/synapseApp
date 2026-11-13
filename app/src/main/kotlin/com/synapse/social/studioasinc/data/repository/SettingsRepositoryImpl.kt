@@ -542,4 +542,16 @@ class SettingsRepositoryImpl private constructor(
     override suspend fun setTypingIndicatorsEnabled(enabled: Boolean) {
         settingsDataStore.setTypingIndicatorsEnabled(enabled)
     }
+
+    override val showFavouritesInChatList: Flow<Boolean> = settingsDataStore.showFavouritesInChatList
+
+    override suspend fun setShowFavouritesInChatList(enabled: Boolean) {
+        settingsDataStore.setShowFavouritesInChatList(enabled)
+    }
+
+    override val showFavouriteBadge: Flow<Boolean> = settingsDataStore.showFavouriteBadge
+
+    override suspend fun setShowFavouriteBadge(enabled: Boolean) {
+        settingsDataStore.setShowFavouriteBadge(enabled)
+    }
 }

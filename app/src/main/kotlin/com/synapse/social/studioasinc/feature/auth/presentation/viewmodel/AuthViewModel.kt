@@ -477,6 +477,7 @@ class AuthViewModel @Inject constructor(
             resetPasswordUseCase(state.password, resetToken).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false)
+                    resetToken = ""
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn)
                 },
                 onFailure = { error ->

@@ -210,9 +210,17 @@ fun PostDetailScreen(
             },
             onCopyLink = { PostShareUtils.copyPostLink(context, postId) },
             onBookmark = { viewModel.toggleBookmark() },
-            onToggleComments = { viewModel.toggleComments() },
+            onToggleComments = {
+                scope.launch {
+                    viewModel.toggleComments()
+                }
+            },
             onReport = { showReportDialog = true },
-            onBlock = { viewModel.blockUser(postDetail.post.authorUid) },
+            onBlock = {
+                scope.launch {
+                    viewModel.blockUser(postDetail.post.authorUid)
+                }
+            },
             onRevokeVote = { viewModel.revokeVote() },
             onSummarize = {
                 showSummarySheet = true
@@ -331,6 +339,7 @@ fun PostDetailScreen(
         }
     ) { paddingValues ->
         PostDetailContent(
+            viewModel = viewModel,
             uiState = uiState,
             paddingValues = paddingValues,
             pagingItems = pagingItems,

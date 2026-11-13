@@ -540,16 +540,18 @@ onMediaClick = { post, index ->
                 selectedPost = null
             },
             onToggleComments = {
-                viewModel.toggleComments(post)
-                selectedPost = null
+                scope.launch {
+                    viewModel.toggleComments(post)
+                }
             },
             onReport = {
                 viewModel.reportPost(post)
                 selectedPost = null
             },
             onBlock = {
-                viewModel.blockUser(post.authorUid)
-                selectedPost = null
+                scope.launch {
+                    viewModel.blockUser(post.authorUid)
+                }
             },
             onRevokeVote = {
                 viewModel.revokeVote(post)

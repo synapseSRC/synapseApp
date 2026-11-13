@@ -116,6 +116,9 @@ object SettingsConstants {
     val KEY_REDUCE_ANIMATIONS_ENABLED = booleanPreferencesKey("reduce_animations_enabled")
     val KEY_AUTOPLAY_ANIMATIONS_ENABLED = booleanPreferencesKey("autoplay_animations_enabled")
 
+    val KEY_SHOW_FAVOURITES_IN_CHAT_LIST = booleanPreferencesKey("show_favourites_in_chat_list")
+    val KEY_SHOW_FAVOURITE_BADGE = booleanPreferencesKey("show_favourite_badge")
+
     val DEFAULT_THEME_MODE = ThemeMode.SYSTEM
     val DEFAULT_DYNAMIC_COLOR_ENABLED = true
     val DEFAULT_FONT_SCALE = FontScale.MEDIUM
@@ -162,6 +165,9 @@ object SettingsConstants {
     val DEFAULT_HIGH_CONTRAST_TEXT_ENABLED = false
     val DEFAULT_REDUCE_ANIMATIONS_ENABLED = false
     val DEFAULT_AUTOPLAY_ANIMATIONS_ENABLED = true
+
+    val DEFAULT_SHOW_FAVOURITES_IN_CHAT_LIST = true
+    val DEFAULT_SHOW_FAVOURITE_BADGE = true
 
     val DEFAULT_AUTO_DOWNLOAD_WIFI_STRINGS = com.synapse.social.studioasinc.ui.settings.MediaType.values().map { it.name }.toSet()
     val DEFAULT_AUTO_DOWNLOAD_WIFI_TYPES = com.synapse.social.studioasinc.ui.settings.MediaType.values().toSet()

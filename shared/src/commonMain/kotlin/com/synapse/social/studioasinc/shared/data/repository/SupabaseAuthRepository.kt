@@ -363,7 +363,12 @@ class SupabaseAuthRepository(
         return try {
             withContext(AppDispatchers.IO) {
                 if (resetToken.isNotEmpty()) {
-                    client.auth.importAuthToken(resetToken, "")
+                    try {
+                        client.auth.importAuthToken(resetToken, "")
+                    } catch (e: Exception) {
+                        logSafeError("Failed to import auth token for password reset", e)
+                        return@withContext Result.failure(e)
+                    }
                 }
                 client.auth.updateUser {
                     this.password = password

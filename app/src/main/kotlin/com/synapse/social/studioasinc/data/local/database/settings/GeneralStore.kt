@@ -24,6 +24,8 @@ interface GeneralStore {
     val reduceAnimationsEnabled: Flow<Boolean>
     val autoplayAnimationsEnabled: Flow<Boolean>
     val typingIndicatorsEnabled: Flow<Boolean>
+    val showFavouritesInChatList: Flow<Boolean>
+    val showFavouriteBadge: Flow<Boolean>
 
     suspend fun setLanguage(languageCode: String)
     suspend fun setNavigationPlacement(placement: NavigationPlacement)
@@ -46,6 +48,8 @@ interface GeneralStore {
     suspend fun setReduceAnimationsEnabled(enabled: Boolean)
     suspend fun setAutoplayAnimationsEnabled(enabled: Boolean)
     suspend fun setTypingIndicatorsEnabled(enabled: Boolean)
+    suspend fun setShowFavouritesInChatList(enabled: Boolean)
+    suspend fun setShowFavouriteBadge(enabled: Boolean)
 }
 
 class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralStore {
@@ -197,6 +201,14 @@ class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralS
         preferences[SettingsConstants.KEY_TYPING_INDICATORS_ENABLED] ?: SettingsConstants.DEFAULT_TYPING_INDICATORS_ENABLED
     }
 
+    override val showFavouritesInChatList: Flow<Boolean> = dataStore.safePreferencesFlow().map { preferences ->
+        preferences[SettingsConstants.KEY_SHOW_FAVOURITES_IN_CHAT_LIST] ?: SettingsConstants.DEFAULT_SHOW_FAVOURITES_IN_CHAT_LIST
+    }
+
+    override val showFavouriteBadge: Flow<Boolean> = dataStore.safePreferencesFlow().map { preferences ->
+        preferences[SettingsConstants.KEY_SHOW_FAVOURITE_BADGE] ?: SettingsConstants.DEFAULT_SHOW_FAVOURITE_BADGE
+    }
+
     override suspend fun setIncreaseContrastEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_INCREASE_CONTRAST_ENABLED] = enabled
@@ -224,6 +236,18 @@ class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralS
     override suspend fun setTypingIndicatorsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_TYPING_INDICATORS_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun setShowFavouritesInChatList(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_SHOW_FAVOURITES_IN_CHAT_LIST] = enabled
+        }
+    }
+
+    override suspend fun setShowFavouriteBadge(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_SHOW_FAVOURITE_BADGE] = enabled
         }
     }
 }
