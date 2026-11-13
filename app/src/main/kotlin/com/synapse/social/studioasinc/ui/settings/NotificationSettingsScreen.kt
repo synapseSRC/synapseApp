@@ -263,26 +263,26 @@ private fun SystemSecuritySection(
     notificationPreferences: NotificationPreferences,
     onToggleCategory: (NotificationCategory, Boolean) -> Unit
 ) {
-    SettingsSection(title = stringResource(R.string.settings_system_security_section)) {
-        SettingsToggleItem(
-            imageVector = Icons.Default.Info,
-            title = stringResource(R.string.settings_security_alerts_title),
-            subtitle = stringResource(R.string.settings_security_alerts_subtitle),
-            checked = true,
-            onCheckedChange = { },
-            enabled = false,
-            position = SettingsItemPosition.Top
-        )
-        SettingsToggleItem(
-            imageVector = Icons.Default.Settings,
-            title = stringResource(R.string.settings_app_updates_title),
-            subtitle = if (notificationPreferences.updatesEnabled) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_disabled),
-            checked = notificationPreferences.updatesEnabled,
-            onCheckedChange = { onToggleCategory(NotificationCategory.SYSTEM_UPDATES, it) },
-            enabled = notificationPreferences.globalEnabled,
-            position = SettingsItemPosition.Bottom
-        )
-    }
+        SettingsSection(title = stringResource(R.string.settings_system_security_section)) {
+            // Security alerts are not user-configurable on Android, so present them as static
+            // information rather than an interactive toggle that does nothing.
+            SettingsListItem(
+                title = stringResource(R.string.settings_security_alerts_title),
+                subtitle = stringResource(R.string.settings_security_alerts_subtitle),
+                position = SettingsItemPosition.Top,
+                enabled = false,
+                leadingContent = { SettingsIconBadge(imageVector = Icons.Default.Info) },
+            )
+            SettingsToggleItem(
+                imageVector = Icons.Default.Settings,
+                title = stringResource(R.string.settings_app_updates_title),
+                subtitle = if (notificationPreferences.updatesEnabled) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_disabled),
+                checked = notificationPreferences.updatesEnabled,
+                onCheckedChange = { onToggleCategory(NotificationCategory.SYSTEM_UPDATES, it) },
+                enabled = notificationPreferences.globalEnabled,
+                position = SettingsItemPosition.Bottom
+            )
+        }
 }
 
 @Composable
