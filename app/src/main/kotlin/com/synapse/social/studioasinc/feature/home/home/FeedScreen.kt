@@ -367,15 +367,13 @@ fun FeedScreen(
             onCopyLink = { PostShareUtils.copyPostLink(context, post.id) },
             onBookmark = { viewModel.bookmarkPost(post) },
             onToggleComments = {
-                scope.launch {
-                    viewModel.toggleComments(post)
-                }
+                viewModel.toggleComments(post)
+                Result.success(Unit)
             },
             onReport = { postToReport = post; showReportDialog = true },
             onBlock = {
-                scope.launch {
-                    viewModel.blockUser(post.authorUid)
-                }
+                viewModel.blockUser(post.authorUid)
+                Result.success(Unit)
             },
             onRevokeVote = { viewModel.revokeVote(post) },
             onSummarize = {

@@ -54,7 +54,7 @@ fun PostOptionsBottomSheet(
     var showDeleteDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    val onToggleCommentsAction = {
+    val onToggleCommentsAction: () -> Unit = {
         scope.launch {
             val result = onToggleComments()
             if (result.isSuccess) {
@@ -62,7 +62,7 @@ fun PostOptionsBottomSheet(
             }
         }
     }
-    val onBlockAction = {
+    val onBlockAction: () -> Unit = {
         scope.launch {
             val result = onBlock()
             if (result.isSuccess) {

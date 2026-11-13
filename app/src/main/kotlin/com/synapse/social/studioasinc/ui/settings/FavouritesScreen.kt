@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -70,8 +71,8 @@ fun FavouritesScreen(
     onBackClick: () -> Unit,
     settingsRepository: SettingsRepository
 ) {
-    val showFavouritesInChatList by settingsRepository.showFavouritesInChatList.collectAsState()
-    val showFavouriteBadge by settingsRepository.showFavouriteBadge.collectAsState()
+    val showFavouritesInChatList by settingsRepository.showFavouritesInChatList.collectAsState(initial = false)
+    val showFavouriteBadge by settingsRepository.showFavouriteBadge.collectAsState(initial = false)
     val scope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 

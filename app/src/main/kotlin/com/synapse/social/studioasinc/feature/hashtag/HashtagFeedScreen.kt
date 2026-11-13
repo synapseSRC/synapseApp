@@ -137,17 +137,15 @@ fun HashtagFeedScreen(
                     selectedPost = null
                 },
                 onToggleComments = {
-                    scope.launch {
-                        viewModel.toggleComments(post.id)
-                    }
+                    viewModel.toggleComments(post.id)
+                    Result.success(Unit)
                 },
                 onReport = {
                     selectedPost = null
                 },
                 onBlock = {
-                    scope.launch {
-                        viewModel.blockUser(post.authorUid)
-                    }
+                    viewModel.blockUser(post.authorUid)
+                    Result.success(Unit)
                 },
                 onRevokeVote = {
                     selectedPost = null
