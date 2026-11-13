@@ -14,10 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.synapse.social.studioasinc.domain.model.Post
-import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
-import com.synapse.social.studioasinc.feature.shared.components.post.PostCardState
-import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper
+import com.synapse.social.studioasinc.feature.shared.components.post.QuotedPostCard
 
 import androidx.compose.ui.Alignment
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
@@ -86,33 +83,16 @@ fun QuotePostScreen(
                 modifier = Modifier.padding(Spacing.space16)
             )
 
-            if (state.isLoading && state.post == null) {
+            val post = state.post
+            if (state.isLoading && post == null) {
                 Box(modifier = Modifier.fillMaxWidth().padding(Spacing.space32), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            } else if (state.post != null) {
-                Surface(
-                    modifier = Modifier.padding(horizontal = Spacing.space16),
-                    tonalElevation = 1.dp,
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    state.post?.let { PostUiMapper.toPostCardState(it) }?.let { PostCard(
- state = it,
-
-                        onLikeClick = {},
-                        onCommentClick = {},
-                        onShareClick = {},
-                        onRepostClick = {},
-                        onBookmarkClick = {},
-                        onUserClick = {},
-                        onPostClick = {},
-                        onMediaClick = { _, _ -> },
-                        onOptionsClick = {},
-                        onPollVote = {},
-                        onQuoteClick = {},
-                        modifier = Modifier.padding(Spacing.space8)
-                    ) }
-                }
+            } else if (post != null) {
+                QuotedPostCard(
+                    quotedPost = post,
+                    modifier = Modifier.padding(horizontal = Spacing.space16)
+                )
             }
 
             Spacer(modifier = Modifier.height(Spacing.space16))

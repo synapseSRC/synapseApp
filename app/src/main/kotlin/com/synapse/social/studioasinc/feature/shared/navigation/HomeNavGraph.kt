@@ -87,7 +87,9 @@ fun HomeNavGraph(
         composable<HomeDestinations.Reels> {
              ReelsScreen(
                  onUserClick = { userId -> onNavigateToProfile(userId) },
-                 onCommentClick = { },
+                 onCommentClick = { reelId ->
+                     navController.navigate(HomeDestinations.PostDetail(postId = reelId))
+                 },
                  onBackClick = { navController.popBackStack() },
                  contentPadding = PaddingValues(bottom = bottomPadding)
              )

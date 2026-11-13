@@ -145,7 +145,7 @@ fun AutomatedCleanupSection(
             title = stringResource(R.string.storage_keep_media),
             value = keepMediaIndex.toFloat(),
             valueRange = 0f..3f,
-            steps = 2,
+            steps = 3,
             onValueChange = { onKeepMediaChanged(keepMediaOptions[it.toInt()]) },
             valueLabel = { keepMediaLabels[it.toInt().coerceIn(0, 3)] },
             position = SettingsItemPosition.Top
@@ -155,7 +155,7 @@ fun AutomatedCleanupSection(
             title = stringResource(R.string.storage_max_cache),
             value = maxCacheIndex.toFloat(),
             valueRange = 0f..3f,
-            steps = 2,
+            steps = 3,
             onValueChange = { onMaxCacheChanged(maxCacheOptions[it.toInt()]) },
             valueLabel = { maxCacheLabels[it.toInt().coerceIn(0, 3)] },
             position = SettingsItemPosition.Bottom

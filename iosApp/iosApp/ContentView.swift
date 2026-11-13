@@ -24,7 +24,7 @@ struct ContentView: View {
                     Label("Chat", systemImage: "message")
                 }
 
-            ProfileView()
+            ProfileView(userId: nil)
                 .tabItem {
                     Label("Profile", systemImage: "person.circle")
                 }

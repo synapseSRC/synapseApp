@@ -208,6 +208,10 @@ class SettingsRepositoryImpl private constructor(
         settingsDataStore.updateNotificationPreference(category, enabled)
     }
 
+    override suspend fun setGlobalNotificationsEnabled(enabled: Boolean) {
+        settingsDataStore.setGlobalNotificationsEnabled(enabled)
+    }
+
     override suspend fun setInAppNotificationsEnabled(enabled: Boolean) {
         settingsDataStore.setInAppNotificationsEnabled(enabled)
     }
@@ -460,6 +464,7 @@ class SettingsRepositoryImpl private constructor(
     }
 
     override suspend fun setChatLockEnabled(enabled: Boolean) {
+        settingsDataStore.setChatLockEnabled(enabled)
         secureStorage.save(KEY_CHAT_LOCK_ENABLED, enabled.toString())
         secureStorage.save(KEY_LOCKED_CHAT_IDS, "")
         secureStorage.save(KEY_CHAT_LOCK_METHOD, "biometric")

@@ -371,6 +371,28 @@ class SupabaseAuthRepository(
     }
 
     /**
+     * Completes a password reset initiated via an email recovery link.
+     *
+     * Verifies the recovery token carried in the deep link and then sets the new password,
+     * so users who click a "reset password" email link can actually complete the reset.
+     */
+    override suspend fun resetPassword(password: String, token: String): Result<Unit> {
+        return try {
+            withContext(AppDispatchers.IO) {
+                client.auth.verifyEmailOtp(OtpType.Email.RECOVERY, token)
+                client.auth.updateUser {
+                    this.password = password
+                }
+                Napier.d("Password reset via recovery token completed", tag = TAG)
+                Result.success(Unit)
+            }
+        } catch (e: Exception) {
+            logSafeError("Password reset via recovery token failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Updates the authenticated user's phone number.
      */
     override suspend fun updatePhoneNumber(phone: String): Result<Unit> {
