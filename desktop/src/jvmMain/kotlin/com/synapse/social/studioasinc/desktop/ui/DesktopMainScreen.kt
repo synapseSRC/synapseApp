@@ -457,9 +457,7 @@ fun ChatDetailView(
                         tooltip = { PlainTooltip { Text("Voice call") } },
                         state = rememberTooltipState()
                     ) {
-                        IconButton(onClick = { /* TODO: implement Voice call */ }) {
-                            Icon(Icons.Default.Call, contentDescription = "Voice call")
-                        }
+                        Icon(Icons.Default.Call, contentDescription = "Voice call")
                     }
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
