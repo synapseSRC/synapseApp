@@ -554,9 +554,7 @@ fun ChatDetailView(
                     tooltip = { PlainTooltip { Text("Emoji") } },
                     state = rememberTooltipState()
                 ) {
-                    IconButton(onClick = { /* TODO: implement Emoji */ }) {
-                        Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
-                    }
+                    Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
                 }
                 Spacer(modifier = Modifier.width(DesktopSpacing.space4))
                 OutlinedTextField(
