@@ -619,6 +619,12 @@ class CreatePostViewModel @Inject constructor(
                 )
 
                 result.onSuccess { posts ->
+                    _uiState.update { s ->
+                        s.copy(
+                            isLoading = false,
+                            isPostCreated = true
+                        )
+                    }
                     val post = posts.firstOrNull()
                     clearDraft()
                     if (post != null) {
@@ -681,6 +687,21 @@ class CreatePostViewModel @Inject constructor(
                 )
 
                 result.onSuccess { posts ->
+                    _uiState.update { s ->
+                        s.copy(
+                            isLoading = false,
+                            isPostCreated = true,
+                            postText = "",
+                            mediaItems = emptyList(),
+                            threadPosts = emptyList(),
+                            pollData = null,
+                            location = null,
+                            youtubeUrl = null,
+                            taggedPeople = emptyList(),
+                            feeling = null,
+                            textBackgroundColor = null
+                        )
+                    }
                     clearDraft()
                     posts.forEach { post ->
                         com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(
@@ -691,24 +712,6 @@ class CreatePostViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoading = false) }
                     UiEventManager.emit(UiEvent.Error("Failed: ${e.message}"))
                     return@launch
-                }
-            }
-
-            if (_uiState.value.isLoading) {
-                _uiState.update { s ->
-                    s.copy(
-                        isLoading = false,
-                        isPostCreated = true,
-                        postText = "",
-                        mediaItems = emptyList(),
-                        threadPosts = emptyList(),
-                        pollData = null,
-                        location = null,
-                        youtubeUrl = null,
-                        taggedPeople = emptyList(),
-                        feeling = null,
-                        textBackgroundColor = null
-                    )
                 }
             }
         }
