@@ -24,6 +24,7 @@ class NotificationStoreImpl(private val dataStore: DataStore<Preferences>) : Not
             followsEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_FOLLOWS] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
             messagesEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_MESSAGES] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
             mentionsEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_MENTIONS] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
+            securityEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_SECURITY] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_SECURITY,
             inAppNotificationsEnabled = preferences[SettingsConstants.KEY_IN_APP_NOTIFICATIONS] ?: SettingsConstants.DEFAULT_IN_APP_NOTIFICATIONS_ENABLED
         )
     }
@@ -39,9 +40,11 @@ class NotificationStoreImpl(private val dataStore: DataStore<Preferences>) : Not
                 NotificationCategory.REPLIES,
                 NotificationCategory.NEW_POSTS,
                 NotificationCategory.SHARES,
-                NotificationCategory.SECURITY_ALERTS,
                 NotificationCategory.SYSTEM_UPDATES -> {
                     // Do nothing or implement if needed
+                }
+                NotificationCategory.SECURITY_ALERTS -> {
+                    preferences[SettingsConstants.KEY_NOTIFICATIONS_SECURITY] = enabled
                 }
             }
         }
