@@ -72,7 +72,7 @@ struct PostDetailView: View {
                                         Circle().fill(Color.secondary.opacity(0.3)).frame(width: 40, height: 40)
                                         Rectangle().fill(Color.secondary.opacity(0.5)).frame(width: 2).padding(.top, AppTheme.Spacing.space4)
                                     }
-                                    PostCardView(post: comment, onLike: {}, onComment: {}, onShare: {}, onBookmark: {})
+                                    PostCardView(post: comment, onLike: {}, onComment: {}, onShare: {}, onBookmark: {}, onMoreOptions: {})
                                 }
                             }
                         }

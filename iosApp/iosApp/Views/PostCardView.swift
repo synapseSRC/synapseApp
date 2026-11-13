@@ -6,6 +6,7 @@ struct PostCardView: View {
     var onComment: () -> Void
     var onShare: () -> Void
     var onBookmark: () -> Void
+    var onMoreOptions: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.space12) {
@@ -44,7 +45,7 @@ struct PostCardView: View {
 
                 Spacer()
 
-                Button(action: { /* More options */ }) {
+                Button(action: onMoreOptions) {
                     Image(systemName: "ellipsis")
                         .foregroundColor(.secondary)
                 }

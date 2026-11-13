@@ -3,6 +3,8 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var navigator: AppNavigator
     @StateObject private var viewModel = DependencyContainer.shared.makeHomeViewModel()
+    @State private var showPostOptions = false
+    @State private var optionsPost: Post?
 
     var body: some View {
         NavigationStack(path: $navigator.homePath) {
@@ -28,7 +30,11 @@ struct HomeView: View {
                                         onLike: { viewModel.toggleLike(for: post) },
                                         onComment: { /* handled by nav */ },
                                         onShare: { /* share action */ },
-                                        onBookmark: { viewModel.toggleBookmark(for: post) }
+                                        onBookmark: { viewModel.toggleBookmark(for: post) },
+                                        onMoreOptions: {
+                                            optionsPost = post
+                                            showPostOptions = true
+                                        }
                                     )
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -73,6 +79,20 @@ struct HomeView: View {
                     PostDetailView(postId: postId)
                 case .home, .search, .notifications, .login, .register:
                     EmptyView()
+                }
+            }
+            .confirmationDialog("Post Options", isPresented: $showPostOptions, titleVisibility: .visible) {
+                Button("Share") { /* share post */ }
+                Button("Bookmark") {
+                    if let post = optionsPost {
+                        viewModel.toggleBookmark(for: post)
+                    }
+                }
+                Button("Report", role: .destructive) { /* report post */ }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                if let post = optionsPost {
+                    Text("Actions for post by \(post.displayName ?? post.username ?? "Unknown")")
                 }
             }
             .onAppear {
