@@ -191,7 +191,14 @@ class HashtagFeedViewModel @Inject constructor(
     fun toggleComments(post: Post) {
         viewModelScope.launch {
             togglePostCommentsUseCase(post.id).collect { result ->
-                result.onFailure { e ->
+                result.onSuccess {
+                    val toggled = if (post.postDisableReplies == "true") "false" else "true"
+                    _uiState.update { state ->
+                        state.copy(posts = state.posts.map {
+                            if (it.id == post.id) it.copy(postDisableReplies = toggled) else it
+                        })
+                    }
+                }.onFailure { e ->
                     _uiState.update { it.copy(error = e.message ?: "Failed to toggle comments") }
                 }
             }
@@ -222,7 +229,13 @@ class HashtagFeedViewModel @Inject constructor(
     fun revokeVote(post: Post) {
         viewModelScope.launch {
             revokeVoteUseCase(post).collect { result ->
-                result.onFailure { e ->
+                result.onSuccess { updatedPost ->
+                    _uiState.update { state ->
+                        state.copy(posts = state.posts.map {
+                            if (it.id == post.id) updatedPost else it
+                        })
+                    }
+                }.onFailure { e ->
                     _uiState.update { it.copy(error = e.message ?: "Failed to revoke vote") }
                 }
             }
