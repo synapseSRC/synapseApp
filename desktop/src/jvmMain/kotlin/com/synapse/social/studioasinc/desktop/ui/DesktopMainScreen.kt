@@ -469,9 +469,7 @@ fun ChatDetailView(
                         tooltip = { PlainTooltip { Text("More options") } },
                         state = rememberTooltipState()
                     ) {
-                        IconButton(onClick = { /* TODO: implement More options */ }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                        }
+                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
                     }
                 }
             }
