@@ -34,10 +34,10 @@ struct PostDetailView: View {
                     // Full Post Card
                     PostCardView(
                         post: viewModel.post,
-                        onLike: { /* Detail like logic */ },
+                        onLike: { viewModel.toggleLike() },
                         onComment: { /* Scroll to comment field */ },
-                        onShare: { /* Detail share logic */ },
-                        onBookmark: { /* Detail bookmark logic */ }
+                        onShare: { viewModel.toggleShare() },
+                        onBookmark: { viewModel.toggleBookmark() }
                     )
 
                     Divider()

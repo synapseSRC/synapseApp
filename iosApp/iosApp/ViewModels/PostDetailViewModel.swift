@@ -108,4 +108,70 @@ class PostDetailViewModel: ObservableObject {
             )
         }
     }
+
+    func toggleLike() {
+        self.post = Post(
+            id: postId,
+            authorUid: self.post.authorUid,
+            postText: self.post.postText,
+            postImage: self.post.postImage,
+            postType: self.post.postType,
+            likesCount: self.post.userReaction == .like ? self.post.likesCount - 1 : self.post.likesCount + 1,
+            commentsCount: self.post.commentsCount,
+            viewsCount: self.post.viewsCount,
+            resharesCount: self.post.resharesCount,
+            mediaItems: self.post.mediaItems,
+            hasPoll: self.post.hasPoll,
+            pollQuestion: self.post.pollQuestion,
+            pollOptions: self.post.pollOptions,
+            createdAt: self.post.createdAt,
+            updatedAt: self.post.updatedAt,
+            username: self.post.username,
+            displayName: self.post.displayName,
+            avatarUrl: self.post.avatarUrl,
+            isVerified: self.post.isVerified,
+            isBookmarked: self.post.isBookmarked,
+            isReshared: self.post.isReshared,
+            userReaction: self.post.userReaction == .like ? nil : .like,
+            reactions: self.post.reactions,
+            inReplyToPostId: self.post.inReplyToPostId,
+            rootPostId: self.post.rootPostId
+        )
+    }
+
+    func toggleBookmark() {
+        self.post = Post(
+            id: postId,
+            authorUid: self.post.authorUid,
+            postText: self.post.postText,
+            postImage: self.post.postImage,
+            postType: self.post.postType,
+            likesCount: self.post.likesCount,
+            commentsCount: self.post.commentsCount,
+            viewsCount: self.post.viewsCount,
+            resharesCount: self.post.resharesCount,
+            mediaItems: self.post.mediaItems,
+            hasPoll: self.post.hasPoll,
+            pollQuestion: self.post.pollQuestion,
+            pollOptions: self.post.pollOptions,
+            createdAt: self.post.createdAt,
+            updatedAt: self.post.updatedAt,
+            username: self.post.username,
+            displayName: self.post.displayName,
+            avatarUrl: self.post.avatarUrl,
+            isVerified: self.post.isVerified,
+            isBookmarked: !self.post.isBookmarked,
+            isReshared: self.post.isReshared,
+            userReaction: self.post.userReaction,
+            reactions: self.post.reactions,
+            inReplyToPostId: self.post.inReplyToPostId,
+            rootPostId: self.post.rootPostId
+        )
+    }
+
+    func toggleShare() {
+        // Share action is handled by presenting a share sheet in the view.
+        // This method exists to wire the share button to a no-op placeholder
+        // that can be replaced with a real share implementation.
+    }
 }
