@@ -31,7 +31,8 @@ struct HomeFeedView: View {
                                         onLike: { viewModel.toggleLike(for: post) },
                                         onComment: { /* Handled by navigation */ },
                                         onShare: { /* Share action */ },
-                                        onBookmark: { viewModel.toggleBookmark(for: post) }
+                                        onBookmark: { viewModel.toggleBookmark(for: post) },
+                                        onMoreOptions: { /* More options */ }
                                     )
                                 }
                                 .buttonStyle(PlainButtonStyle())
