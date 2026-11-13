@@ -472,7 +472,7 @@ internal fun ProfileContent(
                 PostCard(
                     state = postCardState,
                     onLikeClick = { viewModel.reactToPost(postCardState.post, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
-                    onCommentClick = { /* Navigate to detail */ },
+                    onCommentClick = { PostDetailActivity.start(context, comment.postId, comment.userId) },
                     onShareClick = { PostShareUtils.shareComment(context, comment.content) },
                     onRepostClick = { },
                     onBookmarkClick = { },
