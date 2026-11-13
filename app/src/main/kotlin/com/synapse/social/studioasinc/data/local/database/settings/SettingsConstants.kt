@@ -53,6 +53,10 @@ object SettingsConstants {
     val KEY_NOTIFICATIONS_MESSAGES = booleanPreferencesKey("notifications_messages")
     val KEY_NOTIFICATIONS_MENTIONS = booleanPreferencesKey("notifications_mentions")
     val KEY_NOTIFICATIONS_GLOBAL = booleanPreferencesKey("notifications_global")
+    val KEY_NOTIFICATIONS_REPLIES = booleanPreferencesKey("notifications_replies")
+    val KEY_NOTIFICATIONS_NEW_POSTS = booleanPreferencesKey("notifications_new_posts")
+    val KEY_NOTIFICATIONS_SHARES = booleanPreferencesKey("notifications_shares")
+    val KEY_NOTIFICATIONS_SYSTEM_UPDATES = booleanPreferencesKey("notifications_system_updates")
     val KEY_IN_APP_NOTIFICATIONS = booleanPreferencesKey("in_app_notifications")
 
     val KEY_SOUND_EFFECTS_MASTER = booleanPreferencesKey("sound_effects_master")

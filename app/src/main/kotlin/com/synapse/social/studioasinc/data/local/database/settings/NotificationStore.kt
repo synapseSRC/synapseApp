@@ -24,6 +24,10 @@ class NotificationStoreImpl(private val dataStore: DataStore<Preferences>) : Not
             followsEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_FOLLOWS] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
             messagesEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_MESSAGES] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
             mentionsEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_MENTIONS] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
+            repliesEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_REPLIES] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
+            newPostsEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_NEW_POSTS] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
+            sharesEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_SHARES] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
+            updatesEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_SYSTEM_UPDATES] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
             inAppNotificationsEnabled = preferences[SettingsConstants.KEY_IN_APP_NOTIFICATIONS] ?: SettingsConstants.DEFAULT_IN_APP_NOTIFICATIONS_ENABLED
         )
     }
@@ -36,12 +40,10 @@ class NotificationStoreImpl(private val dataStore: DataStore<Preferences>) : Not
                 NotificationCategory.FOLLOWS -> preferences[SettingsConstants.KEY_NOTIFICATIONS_FOLLOWS] = enabled
                 NotificationCategory.MESSAGES -> preferences[SettingsConstants.KEY_NOTIFICATIONS_MESSAGES] = enabled
                 NotificationCategory.MENTIONS -> preferences[SettingsConstants.KEY_NOTIFICATIONS_MENTIONS] = enabled
-                NotificationCategory.REPLIES,
-                NotificationCategory.NEW_POSTS,
-                NotificationCategory.SHARES,
-                NotificationCategory.SYSTEM_UPDATES -> {
-                    // Do nothing or implement if needed
-                }
+                NotificationCategory.REPLIES -> preferences[SettingsConstants.KEY_NOTIFICATIONS_REPLIES] = enabled
+                NotificationCategory.NEW_POSTS -> preferences[SettingsConstants.KEY_NOTIFICATIONS_NEW_POSTS] = enabled
+                NotificationCategory.SHARES -> preferences[SettingsConstants.KEY_NOTIFICATIONS_SHARES] = enabled
+                NotificationCategory.SYSTEM_UPDATES -> preferences[SettingsConstants.KEY_NOTIFICATIONS_SYSTEM_UPDATES] = enabled
             }
         }
     }
