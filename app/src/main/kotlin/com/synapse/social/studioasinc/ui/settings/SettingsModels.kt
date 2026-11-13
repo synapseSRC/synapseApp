@@ -56,7 +56,7 @@ enum class StatusVisibility {
 }
 
 enum class NotificationCategory {
-    LIKES, COMMENTS, REPLIES, FOLLOWS, MESSAGES, MENTIONS, NEW_POSTS, SHARES, SYSTEM_UPDATES;
+    LIKES, COMMENTS, REPLIES, FOLLOWS, MESSAGES, MENTIONS, NEW_POSTS, SHARES, SECURITY_ALERTS, SYSTEM_UPDATES;
     fun displayName(): String = name.lowercase().replace("_", " ").replaceFirstChar { it.uppercase() }
 }
 
@@ -202,6 +202,7 @@ data class NotificationPreferences(
         NotificationCategory.MENTIONS -> mentionsEnabled
         NotificationCategory.NEW_POSTS -> newPostsEnabled
         NotificationCategory.SHARES -> sharesEnabled
+        NotificationCategory.SECURITY_ALERTS -> securityEnabled
         NotificationCategory.SYSTEM_UPDATES -> updatesEnabled
     }
 
@@ -215,6 +216,7 @@ data class NotificationPreferences(
             NotificationCategory.MENTIONS -> copy(mentionsEnabled = enabled)
             NotificationCategory.NEW_POSTS -> copy(newPostsEnabled = enabled)
             NotificationCategory.SHARES -> copy(sharesEnabled = enabled)
+            NotificationCategory.SECURITY_ALERTS -> copy(securityEnabled = enabled)
             NotificationCategory.SYSTEM_UPDATES -> copy(updatesEnabled = enabled)
         }
     }

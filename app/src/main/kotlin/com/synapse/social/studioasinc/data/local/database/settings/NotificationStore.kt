@@ -39,6 +39,7 @@ class NotificationStoreImpl(private val dataStore: DataStore<Preferences>) : Not
                 NotificationCategory.REPLIES,
                 NotificationCategory.NEW_POSTS,
                 NotificationCategory.SHARES,
+                NotificationCategory.SECURITY_ALERTS,
                 NotificationCategory.SYSTEM_UPDATES -> {
                     // Do nothing or implement if needed
                 }
