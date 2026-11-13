@@ -10,10 +10,14 @@ import com.synapse.social.studioasinc.domain.usecase.post.RepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.UnrepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.post.TogglePostCommentsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetPostsByHashtagUseCase
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
 import com.synapse.social.studioasinc.domain.usecase.reaction.PopulatePostReactionsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,11 +44,18 @@ class HashtagFeedViewModel @Inject constructor(
     private val unrepostPostUseCase: UnrepostPostUseCase,
     private val populatePostPollsUseCase: PopulatePostPollsUseCase,
     private val populatePostReactionsUseCase: PopulatePostReactionsUseCase,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val togglePostCommentsUseCase: TogglePostCommentsUseCase,
+    private val blockUserUseCase: BlockUserUseCase,
+    private val reportPostUseCase: ReportPostUseCase,
+    private val revokeVoteUseCase: RevokeVoteUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HashtagFeedUiState())
     val uiState: StateFlow<HashtagFeedUiState> = _uiState.asStateFlow()
+
+    /** Default reason used when reporting a post from the hashtag feed (no reason picker is shown there). */
+    private val defaultReportReason = "Reported from hashtag feed"
 
     fun init(tag: String) {
         if (_uiState.value.tag == tag) return
@@ -175,5 +186,46 @@ class HashtagFeedViewModel @Inject constructor(
 
     fun isPostOwner(post: Post): Boolean {
         return authRepository.getCurrentUserId() == post.authorUid
+    }
+
+    fun toggleComments(post: Post) {
+        viewModelScope.launch {
+            togglePostCommentsUseCase(post.id).collect { result ->
+                result.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to toggle comments") }
+                }
+            }
+        }
+    }
+
+    fun blockUser(userId: String) {
+        viewModelScope.launch {
+            blockUserUseCase(userId).onSuccess {
+                _uiState.update { it.copy(error = null) }
+                loadPosts(_uiState.value.tag)
+            }.onFailure { error ->
+                _uiState.update { it.copy(error = error.message ?: "Failed to block user") }
+            }
+        }
+    }
+
+    fun reportPost(postId: String) {
+        viewModelScope.launch {
+            reportPostUseCase(postId, defaultReportReason, null).collect { result ->
+                result.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to report post") }
+                }
+            }
+        }
+    }
+
+    fun revokeVote(post: Post) {
+        viewModelScope.launch {
+            revokeVoteUseCase(post).collect { result ->
+                result.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to revoke vote") }
+                }
+            }
+        }
     }
 }
