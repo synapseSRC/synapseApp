@@ -331,7 +331,6 @@ fun PostDetailScreen(
         }
     ) { paddingValues ->
         PostDetailContent(
-            viewModel = viewModel,
             uiState = uiState,
             paddingValues = paddingValues,
             pagingItems = pagingItems,
