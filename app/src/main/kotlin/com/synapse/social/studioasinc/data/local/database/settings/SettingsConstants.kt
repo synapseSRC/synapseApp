@@ -52,6 +52,10 @@ object SettingsConstants {
     val KEY_NOTIFICATIONS_FOLLOWS = booleanPreferencesKey("notifications_follows")
     val KEY_NOTIFICATIONS_MESSAGES = booleanPreferencesKey("notifications_messages")
     val KEY_NOTIFICATIONS_MENTIONS = booleanPreferencesKey("notifications_mentions")
+    val KEY_NOTIFICATIONS_REPLIES = booleanPreferencesKey("notifications_replies")
+    val KEY_NOTIFICATIONS_NEW_POSTS = booleanPreferencesKey("notifications_new_posts")
+    val KEY_NOTIFICATIONS_SHARES = booleanPreferencesKey("notifications_shares")
+    val KEY_NOTIFICATIONS_SYSTEM_UPDATES = booleanPreferencesKey("notifications_system_updates")
     val KEY_NOTIFICATIONS_GLOBAL = booleanPreferencesKey("notifications_global")
     val KEY_NOTIFICATIONS_SECURITY = booleanPreferencesKey("notifications_security")
     val KEY_IN_APP_NOTIFICATIONS = booleanPreferencesKey("in_app_notifications")
@@ -131,6 +135,10 @@ object SettingsConstants {
     val DEFAULT_NOTIFICATIONS_GLOBAL = true
     val DEFAULT_NOTIFICATIONS_SECURITY = true
     val DEFAULT_IN_APP_NOTIFICATIONS_ENABLED = true
+    val DEFAULT_REPLIES_ENABLED = true
+    val DEFAULT_NEW_POSTS_ENABLED = true
+    val DEFAULT_SHARES_ENABLED = true
+    val DEFAULT_UPDATES_ENABLED = true
     val DEFAULT_SOUND_TONES_ENABLED = true
     val DEFAULT_READ_RECEIPTS_ENABLED = true
     val DEFAULT_TYPING_INDICATORS_ENABLED = true
