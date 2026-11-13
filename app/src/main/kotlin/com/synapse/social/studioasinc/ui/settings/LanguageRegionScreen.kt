@@ -121,7 +121,7 @@ fun LanguageRegionScreen(
                         title = stringResource(R.string.settings_region_preferences_title),
                         subtitle = stringResource(R.string.settings_region_preferences_subtitle),
                         imageVector = Icons.Filled.Language,
-                        onClick = { viewModel.navigateToRegionPreferences() },
+                        onClick = null,
                         enabled = !isLoading
                     )
                 }
