@@ -161,9 +161,14 @@ class CallViewModel @Inject constructor(
 
     fun toggleSpeaker() {
         val session = currentSession() ?: return
+        // SPEAKER toggles off to the earpiece; every other route (EARPIECE, BLUETOOTH,
+        // WIRED_HEADSET) switches to SPEAKER instead of forcing the earpiece and silently
+        // dropping an active Bluetooth headset or wired headphones.
         selectAudioRoute(
-            if (session.audioRoute == CallAudioRoute.SPEAKER) CallAudioRoute.EARPIECE
-            else CallAudioRoute.SPEAKER
+            when (session.audioRoute) {
+                CallAudioRoute.SPEAKER -> CallAudioRoute.EARPIECE
+                else -> CallAudioRoute.SPEAKER
+            }
         )
     }
 
