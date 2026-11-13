@@ -547,9 +547,7 @@ fun ChatDetailView(
                     tooltip = { PlainTooltip { Text("Attach file") } },
                     state = rememberTooltipState()
                 ) {
-                    IconButton(onClick = { /* TODO: implement Attach file */ }) {
-                        Icon(Icons.Default.AddCircleOutline, contentDescription = "Attach file")
-                    }
+                    Icon(Icons.Default.AddCircleOutline, contentDescription = "Attach file")
                 }
                 TooltipBox(
                     positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
