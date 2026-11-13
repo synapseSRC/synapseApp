@@ -2,10 +2,12 @@ import SwiftUI
 
 struct ProfileView: View {
     let userId: String?
-    @StateObject private var viewModel = ProfileViewModel()
+
+    @StateObject private var viewModel: ProfileViewModel
 
     init(userId: String? = nil) {
         self.userId = userId
+        _viewModel = StateObject(wrappedValue: ProfileViewModel(userId: userId))
     }
 
     var body: some View {
@@ -110,7 +112,7 @@ struct ProfileView: View {
                 }
             }
             .task {
-                await viewModel.loadProfile(userId: userId)
+                await viewModel.loadProfile()
             }
         }
     }

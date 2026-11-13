@@ -32,7 +32,7 @@ struct AppTabView: View {
                 }
                 .tag(AppTab.notifications)
 
-            ProfileView()
+            ProfileView(userId: nil)
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
                 }

@@ -23,6 +23,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.synapse.social.studioasinc.R
@@ -334,7 +336,8 @@ fun StoryViewerScreen(
                         storyTime = currentStory.createdAt,
                         expiresAt = currentStory.expiresAt,
                         onClose = onClose,
-                        onMore = { viewModel.showOptionsSheet() }
+                        onMore = { viewModel.showOptionsSheet() },
+                        onUserClick = { uiState.user?.uid?.let { onNavigateToProfile(it) } }
                     )
                 }
 
@@ -532,6 +535,7 @@ fun StoryUserHeader(
     storyTime: String?,
     onClose: () -> Unit,
     onMore: () -> Unit = {},
+    onUserClick: () -> Unit = {},
     expiresAt: String? = null
 ) {
     Row(
@@ -540,12 +544,15 @@ fun StoryUserHeader(
             .padding(vertical = Spacing.space8),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val viewProfileContentDescription = stringResource(R.string.view_profile)
 
         Box(
             modifier = Modifier
                 .size(Sizes.IconHuge)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable { onUserClick() }
+                .semantics { contentDescription = viewProfileContentDescription },
             contentAlignment = Alignment.Center
         ) {
             if (user?.avatar != null) {

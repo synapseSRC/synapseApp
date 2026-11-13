@@ -167,7 +167,7 @@ fun AuthScreen(
                 }
 
                 ResetPasswordScreen(
-                    state = state as? AuthUiState.ResetPassword ?: AuthUiState.ResetPassword(),
+                    state = state as? AuthUiState.ResetPassword ?: AuthUiState.ResetPassword(token = token),
                     onPasswordChanged = viewModel::onPasswordChanged,
                     onConfirmPasswordChanged = viewModel::onConfirmPasswordChanged,
                     onResetPasswordClick = viewModel::onSubmitNewPassword,

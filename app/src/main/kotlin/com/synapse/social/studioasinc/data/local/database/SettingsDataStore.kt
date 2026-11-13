@@ -81,6 +81,7 @@ class SettingsDataStore private constructor(
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_MESSAGES)
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_GLOBAL)
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_MENTIONS)
+            preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_GLOBAL)
             preferences.remove(SettingsConstants.KEY_IN_APP_NOTIFICATIONS)
 
             preferences.remove(SettingsConstants.KEY_SOUND_EFFECTS_MASTER)
@@ -158,6 +159,7 @@ class SettingsDataStore private constructor(
             preferences[SettingsConstants.KEY_NOTIFICATIONS_MESSAGES] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
             preferences[SettingsConstants.KEY_NOTIFICATIONS_GLOBAL] = SettingsConstants.DEFAULT_GLOBAL_NOTIFICATIONS_ENABLED
             preferences[SettingsConstants.KEY_NOTIFICATIONS_MENTIONS] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
+            preferences[SettingsConstants.KEY_NOTIFICATIONS_GLOBAL] = SettingsConstants.DEFAULT_NOTIFICATIONS_GLOBAL
             preferences[SettingsConstants.KEY_IN_APP_NOTIFICATIONS] = SettingsConstants.DEFAULT_IN_APP_NOTIFICATIONS_ENABLED
 
             preferences[SettingsConstants.KEY_READ_RECEIPTS_ENABLED] = SettingsConstants.DEFAULT_READ_RECEIPTS_ENABLED

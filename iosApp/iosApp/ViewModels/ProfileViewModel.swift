@@ -10,12 +10,22 @@ class ProfileViewModel: ObservableObject {
 
     private let iosDependencies = IOSDependencies.shared
 
+    private let targetUserId: String?
+
+    init(userId: String? = nil) {
+        self.targetUserId = userId
+    }
+
     private var currentUid: String {
         return iosDependencies.getAuthRepository().getCurrentUserId() ?? ""
     }
 
-    func loadProfile(userId: String? = nil) async {
-        let uid = userId ?? currentUid
+    private var uidToLoad: String {
+        return targetUserId ?? currentUid
+    }
+
+    func loadProfile() async {
+        let uid = uidToLoad
         guard !uid.isEmpty else {
             self.generalError = "No authenticated user ID found"
             return

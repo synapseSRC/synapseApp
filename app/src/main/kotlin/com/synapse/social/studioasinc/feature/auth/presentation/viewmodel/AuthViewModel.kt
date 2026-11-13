@@ -356,7 +356,7 @@ class AuthViewModel @Inject constructor(
             handleOAuthCallbackUseCase(deepLink).fold(
                 onSuccess = {
                     if (deepLink.type == "recovery") {
-                        resetToken = deepLink.accessToken ?: ""
+                        resetToken = deepLink.accessToken ?: deepLink.code ?: ""
                         _uiState.value = AuthUiState.ResetPassword()
                         _navigationEvent.emit(AuthNavigationEvent.NavigateToResetPassword(resetToken))
                     } else {

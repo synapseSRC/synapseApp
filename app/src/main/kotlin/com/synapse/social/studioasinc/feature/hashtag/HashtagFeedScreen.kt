@@ -35,7 +35,7 @@ fun HashtagFeedScreen(
     onNavigateToPost: (postId: String, commentId: String?) -> Unit,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToQuotePost: (String) -> Unit,
-    onNavigateToEditPost: (postId: String) -> Unit
+    onNavigateToEditPost: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

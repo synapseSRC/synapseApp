@@ -168,6 +168,7 @@ val currentUserId = currentUserIdState ?: ""
     val chatThemePreset by viewModel.chatThemePreset.collectAsState()
     val chatMessageCornerRadius by viewModel.chatMessageCornerRadius.collectAsState()
     val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
+    val wordEffects by viewModel.wordEffects.collectAsState(emptyList())
 
     val participantAvatarUrl = participantProfile?.avatar
         ?: initialParticipantAvatar?.let {
@@ -602,6 +603,7 @@ val currentUserId = currentUserIdState ?: ""
                                 chatMessageCornerRadius = chatMessageCornerRadius,
                                 chatThemePreset = chatThemePreset,
                                 chatAvatarDisabled = chatAvatarDisabled,
+                                chatWordEffects = wordEffects,
                                 participantProfile = participantProfile,
                                 initialParticipantName = initialParticipantName,
                                 participantAvatarUrl = participantAvatarUrl,

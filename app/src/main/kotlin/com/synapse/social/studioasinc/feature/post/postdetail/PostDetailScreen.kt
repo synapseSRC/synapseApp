@@ -39,6 +39,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.SharedPostI
 import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMapper
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCard
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.components.post.PostSummarySheet
 import com.synapse.social.studioasinc.feature.shared.sharepost.SharePostSheetViewModel
 import com.synapse.social.studioasinc.feature.shared.sharepost.ShareToChatSheet
@@ -367,7 +368,10 @@ fun PostDetailScreen(
                 selectedMediaIndex = index
                 showMediaViewer = true
             },
-            onPostReactionSelected = { _, reaction -> viewModel.toggleReaction(reaction) }
+            onPostReactionSelected = { _, reaction -> viewModel.toggleReaction(reaction) },
+            postId = postId,
+            rootCommentId = rootCommentId,
+            onRetry = { viewModel.loadPost(postId, rootCommentId) }
         )
     }
 
@@ -403,7 +407,9 @@ private fun PostDetailContent(
     onPostPollVote: (com.synapse.social.studioasinc.domain.model.Post, Int) -> Unit,
     onPostMediaClick: (Int) -> Unit,
     onPostReactionSelected: (com.synapse.social.studioasinc.domain.model.Post, ReactionType) -> Unit,
-    viewModel: PostDetailViewModel
+    postId: String = "",
+    rootCommentId: String? = null,
+    onRetry: () -> Unit = {}
 ) {
     val context = LocalContext.current
     Box(
@@ -417,9 +423,13 @@ private fun PostDetailContent(
             }
         } else if (uiState.error != null && uiState.post == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
                     Text(stringResource(R.string.error_prefix, uiState.error ?: ""))
-                    Button(onClick = { viewModel.retryLoadPost() }) {
+                    Spacer(modifier = Modifier.height(Spacing.space16))
+                    Button(onClick = onRetry) {
                         Text(stringResource(R.string.retry))
                     }
                 }
@@ -506,6 +516,7 @@ private fun PostDetailContent(
                                     likesCount = postDetail.reactionSummary.values.sum(),
                                     replyCount = postDetail.post.replyCount,
                                     isReshared = postDetail.hasReshared,
+                                    isBookmarked = postDetail.isBookmarked,
                                     username = postDetail.author.username,
                                     avatarUrl = postDetail.author.avatar,
                                     isVerified = postDetail.author.verify

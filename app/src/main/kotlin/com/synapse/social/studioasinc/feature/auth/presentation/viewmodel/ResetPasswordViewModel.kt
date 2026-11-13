@@ -49,6 +49,11 @@ class ResetPasswordViewModel @Inject constructor(
          )
     }
 
+    fun initToken(token: String) {
+        val state = _uiState.value as? AuthUiState.ResetPassword ?: return
+        _uiState.value = state.copy(token = token)
+    }
+
     fun onSubmitNewPassword() {
         val state = _uiState.value as? AuthUiState.ResetPassword ?: return
 

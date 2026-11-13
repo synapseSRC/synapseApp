@@ -15,6 +15,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageReaction
 import com.synapse.social.studioasinc.shared.domain.model.chat.MessageType
 import com.synapse.social.studioasinc.shared.domain.model.chat.TypingStatus
+import com.synapse.social.studioasinc.shared.domain.model.chat.effects.WordEffect
 import com.synapse.social.studioasinc.shared.domain.model.sound.SoundEffect
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
@@ -23,6 +24,7 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePres
 import com.synapse.social.studioasinc.shared.domain.repository.ChatRepository
 import com.synapse.social.studioasinc.shared.domain.repository.FileUploader
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.*
+import com.synapse.social.studioasinc.shared.domain.usecase.chat.effects.GetWordEffectsUseCase
 import com.synapse.social.studioasinc.shared.domain.model.BlockStatus
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
@@ -60,7 +62,8 @@ private const val MESSAGE_SYNC_PAGE_SIZE = 50
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val dependencies: ChatDependencies,
-    private val playSoundEffect: PlaySoundEffectUseCase
+    private val playSoundEffect: PlaySoundEffectUseCase,
+    private val getWordEffectsUseCase: GetWordEffectsUseCase
 ) : ViewModel() {
 
     // Extracted individual dependencies from ChatDependencies
@@ -206,6 +209,9 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     val chatMessageCornerRadius = getChatSettingsUseCase.chatMessageCornerRadius
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 16)
 
+    private val _wordEffects = MutableStateFlow<List<WordEffect>>(emptyList())
+    val wordEffects: StateFlow<List<WordEffect>> = _wordEffects.asStateFlow()
+
     private val chatMaxMessageChunkSize = getChatSettingsUseCase.chatMaxMessageChunkSize
         .stateIn(viewModelScope, SharingStarted.Eagerly, 500)
 
@@ -263,6 +269,17 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val historyPaginationMutex = Mutex()
     private val activeMessageSyncs = ConcurrentHashMap<String, Deferred<Unit>>()
     private val emptyChatSyncCursors = ConcurrentHashMap<String, Pair<String, String>>()
+
+    init {
+        viewModelScope.launch {
+            resolvedChatId
+                .filter { it != null }
+                .distinctUntilChanged()
+                .collect { chatId ->
+                    chatId?.let { loadWordEffects(it) }
+                }
+        }
+    }
 
     private fun updateUiState() {
         _uiState.value = ChatUiState(
@@ -625,6 +642,17 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         // its own, which is what keeps two chats from sharing one composer.
         if (chatId != "new") inputDelegate.restoreDraft(chatId)
         updateUiState()
+    }
+
+    private fun loadWordEffects(chatId: String) {
+        viewModelScope.launch {
+            getWordEffectsUseCase(chatId).onSuccess { effects ->
+                _wordEffects.value = effects
+            }.onFailure {
+                // Never break chat rendering because effect loading failed: keep the last known
+                // (or empty) effects so messages continue to render normally.
+            }
+        }
     }
 
     fun refreshMessages() {

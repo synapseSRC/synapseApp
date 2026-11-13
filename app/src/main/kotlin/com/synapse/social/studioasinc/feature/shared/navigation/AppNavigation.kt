@@ -955,6 +955,7 @@ fun NavGraphBuilder.hashtagGraph(
             },
             onNavigateToEditPost = { postId ->
                 navController.navigate(AppDestination.CreatePost(postId = postId))
+            },
             }
         )
     }
@@ -973,7 +974,10 @@ fun NavGraphBuilder.storyGraph(
                 StoryPagerScreen(
                     userIds = userIds,
                     initialIndex = userIds.indexOf(userId).coerceAtLeast(0),
-                    onClose = { navController.popBackStack() }
+                    onClose = { navController.popBackStack() },
+                    onNavigateToProfile = { profileUserId ->
+                        navController.navigate(AppDestination.Profile(profileUserId))
+                    }
                 )
             }
 }

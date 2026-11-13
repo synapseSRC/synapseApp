@@ -118,15 +118,6 @@ fun DesktopMainScreen(
                         )
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                            tooltip = { PlainTooltip { Text("New chat") } },
-                            state = rememberTooltipState()
-                        ) {
-                            IconButton(onClick = { /* TODO: implement New chat */ }) {
-                                Icon(Icons.Default.Create, contentDescription = "New chat")
-                            }
-                        }
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                             tooltip = { PlainTooltip { Text("Menu") } },
                             state = rememberTooltipState()
                         ) {

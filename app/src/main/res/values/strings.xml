@@ -431,6 +431,9 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="error_forward_no_network">No network connection. Message will be forwarded when online.</string>
     <string name="success_forward_count">Message forwarded to %1$d conversation(s)</string>
 
+    <!-- Direct chat errors -->
+    <string name="error_start_chat_failed">Could not start chat. Please try again.</string>
+
     <!-- Edit Errors -->
     <string name="error_edit_generic">Unable to edit message. Please try again.</string>
     <string name="error_edit_too_old">This message is too old to edit (>48 hours)</string>

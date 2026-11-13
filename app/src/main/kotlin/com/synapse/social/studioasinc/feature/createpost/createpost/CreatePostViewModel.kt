@@ -657,6 +657,21 @@ class CreatePostViewModel @Inject constructor(
                             }
                         }
                     }
+                    _uiState.update { s ->
+                        s.copy(
+                            isLoading = false,
+                            isPostCreated = true,
+                            postText = "",
+                            mediaItems = emptyList(),
+                            threadPosts = emptyList(),
+                            pollData = null,
+                            location = null,
+                            youtubeUrl = null,
+                            taggedPeople = emptyList(),
+                            feeling = null,
+                            textBackgroundColor = null
+                        )
+                    }
                 }.onFailure { e ->
                     _uiState.update { it.copy(isLoading = false) }
                     UiEventManager.emit(UiEvent.Error("Failed: ${e.message}"))
@@ -706,6 +721,21 @@ class CreatePostViewModel @Inject constructor(
                     posts.forEach { post ->
                         com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(
                             com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Created(post)
+                        )
+                    }
+                    _uiState.update { s ->
+                        s.copy(
+                            isLoading = false,
+                            isPostCreated = true,
+                            postText = "",
+                            mediaItems = emptyList(),
+                            threadPosts = emptyList(),
+                            pollData = null,
+                            location = null,
+                            youtubeUrl = null,
+                            taggedPeople = emptyList(),
+                            feeling = null,
+                            textBackgroundColor = null
                         )
                     }
                 }.onFailure { e ->
