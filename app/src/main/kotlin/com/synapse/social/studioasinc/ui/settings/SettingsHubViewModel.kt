@@ -157,17 +157,13 @@ class SettingsHubViewModel @Inject constructor(
                 is SettingsAction.Toggle -> {
                     if (action.key == "notifications_global") {
                         val enabled = !action.currentValue
-                        var failures = 0
-                        com.synapse.social.studioasinc.shared.domain.model.settings.NotificationCategory.values().forEach { category ->
-                            try {
-                                settingsRepository.updateNotificationPreference(category, enabled)
-                            } catch (_: Exception) {
-                                failures++
-                            }
+                        try {
+                            settingsRepository.setGlobalNotificationsEnabled(enabled)
+                        } catch (_: Exception) {
+                            android.util.Log.e("SettingsHubViewModel", "Failed to update global notifications preference.")
                         }
-                        if (failures > 0) {
-                            android.util.Log.e("SettingsHubViewModel", "Failed to update $failures notification category(ies).")
-                        }
+                    } else {
+                        android.util.Log.d("SettingsHubViewModel", "Unhandled toggle action key: ${action.key}")
                     }
                 }
                 is SettingsAction.Execute -> {

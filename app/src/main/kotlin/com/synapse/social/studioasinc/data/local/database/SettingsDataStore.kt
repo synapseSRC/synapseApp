@@ -79,6 +79,7 @@ class SettingsDataStore private constructor(
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_COMMENTS)
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_FOLLOWS)
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_MESSAGES)
+            preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_GLOBAL)
             preferences.remove(SettingsConstants.KEY_NOTIFICATIONS_MENTIONS)
             preferences.remove(SettingsConstants.KEY_IN_APP_NOTIFICATIONS)
 
@@ -155,6 +156,7 @@ class SettingsDataStore private constructor(
             preferences[SettingsConstants.KEY_NOTIFICATIONS_COMMENTS] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
             preferences[SettingsConstants.KEY_NOTIFICATIONS_FOLLOWS] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
             preferences[SettingsConstants.KEY_NOTIFICATIONS_MESSAGES] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
+            preferences[SettingsConstants.KEY_NOTIFICATIONS_GLOBAL] = SettingsConstants.DEFAULT_GLOBAL_NOTIFICATIONS_ENABLED
             preferences[SettingsConstants.KEY_NOTIFICATIONS_MENTIONS] = SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED
             preferences[SettingsConstants.KEY_IN_APP_NOTIFICATIONS] = SettingsConstants.DEFAULT_IN_APP_NOTIFICATIONS_ENABLED
 

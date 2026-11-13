@@ -11,12 +11,14 @@ import kotlinx.coroutines.flow.map
 interface NotificationStore {
     val notificationPreferences: Flow<NotificationPreferences>
     suspend fun updateNotificationPreference(category: NotificationCategory, enabled: Boolean)
+    suspend fun setGlobalNotificationsEnabled(enabled: Boolean)
     suspend fun setInAppNotificationsEnabled(enabled: Boolean)
 }
 
 class NotificationStoreImpl(private val dataStore: DataStore<Preferences>) : NotificationStore {
     override val notificationPreferences: Flow<NotificationPreferences> = dataStore.safePreferencesFlow().map { preferences ->
         NotificationPreferences(
+            globalEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_GLOBAL] ?: SettingsConstants.DEFAULT_GLOBAL_NOTIFICATIONS_ENABLED,
             likesEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_LIKES] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
             commentsEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_COMMENTS] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
             followsEnabled = preferences[SettingsConstants.KEY_NOTIFICATIONS_FOLLOWS] ?: SettingsConstants.DEFAULT_NOTIFICATIONS_ENABLED,
@@ -41,6 +43,12 @@ class NotificationStoreImpl(private val dataStore: DataStore<Preferences>) : Not
                     // Do nothing or implement if needed
                 }
             }
+        }
+    }
+
+    override suspend fun setGlobalNotificationsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_NOTIFICATIONS_GLOBAL] = enabled
         }
     }
 
