@@ -21,6 +21,16 @@ struct DataStorageSettingsView: View {
                         .foregroundColor(.red)
                 }
                 .accessibilityLabel("Clear App Cache Button")
+                .alert(isPresented: $showClearAlert) {
+                    Alert(
+                        title: Text("Clear Cache?"),
+                        message: Text("This will free up space but may cause initial loading to be slower."),
+                        primaryButton: .destructive(Text("Clear")) {
+                            cacheSize = "0 MB"
+                        },
+                        secondaryButton: .cancel()
+                    )
+                }
             }
 
             Section(header: Text("Data Management")) {
@@ -28,28 +38,18 @@ struct DataStorageSettingsView: View {
                     Text("Request Account Data Download")
                 }
                 .accessibilityLabel("Request Account Data Download Button")
+                .alert(
+                    "Account Data Download",
+                    isPresented: $showDownloadAlert,
+                    actions: {
+                        Button("OK", role: .cancel) {}
+                    },
+                    message: {
+                        Text("Account data download isn't available yet. Please check back later.")
+                    }
+                )
             }
         }
         .navigationTitle("Data & Storage")
-        .alert(isPresented: $showClearAlert) {
-            Alert(
-                title: Text("Clear Cache?"),
-                message: Text("This will free up space but may cause initial loading to be slower."),
-                primaryButton: .destructive(Text("Clear")) {
-                    cacheSize = "0 MB"
-                },
-                secondaryButton: .cancel()
-            )
-        }
-        .alert(
-            "Account Data Download",
-            isPresented: $showDownloadAlert,
-            actions: {
-                Button("OK", role: .cancel) {}
-            },
-            message: {
-                Text("Account data download isn't available yet. Please check back later.")
-            }
-        )
     }
 }
