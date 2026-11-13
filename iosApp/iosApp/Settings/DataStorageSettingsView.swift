@@ -3,6 +3,7 @@ import SwiftUI
 struct DataStorageSettingsView: View {
     @State private var cacheSize = "124 MB"
     @State private var showClearAlert = false
+    @State private var showDownloadAlert = false
 
     var body: some View {
         Form {
@@ -23,7 +24,7 @@ struct DataStorageSettingsView: View {
             }
 
             Section(header: Text("Data Management")) {
-                Button(action: { print("Download Data Requested") }) {
+                Button(action: { showDownloadAlert = true }) {
                     Text("Request Account Data Download")
                 }
                 .accessibilityLabel("Request Account Data Download Button")
@@ -40,5 +41,15 @@ struct DataStorageSettingsView: View {
                 secondaryButton: .cancel()
             )
         }
+        .alert(
+            "Account Data Download",
+            isPresented: $showDownloadAlert,
+            actions: {
+                Button("OK", role: .cancel) {}
+            },
+            message: {
+                Text("Account data download isn't available yet. Please check back later.")
+            }
+        )
     }
 }
