@@ -120,9 +120,7 @@ fun DesktopMainScreen(
                             tooltip = { PlainTooltip { Text("Menu") } },
                             state = rememberTooltipState()
                         ) {
-                            IconButton(onClick = { /* TODO: implement Menu */ }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                            }
+                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                         }
                     }
 
