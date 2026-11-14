@@ -464,13 +464,6 @@ fun ChatDetailView(
                     ) {
                         Icon(Icons.Default.Search, contentDescription = "Search in chat")
                     }
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("More options") } },
-                        state = rememberTooltipState()
-                    ) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                    }
                 }
             }
         }
