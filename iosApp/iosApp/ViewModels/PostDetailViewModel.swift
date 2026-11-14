@@ -170,9 +170,8 @@ class PostDetailViewModel: ObservableObject {
     }
 
     func toggleShare() {
-        // Share action is handled by presenting a share sheet in the view.
-        // This method exists to wire the share button to a no-op placeholder
-        // that can be replaced with a real share implementation.
+        // Share is now presented directly from PostDetailView via a ShareLink sheet.
+        // This method is retained for API compatibility but is no longer invoked by the view.
     }
 
     func toggleLike(for comment: Post) {
@@ -240,8 +239,7 @@ class PostDetailViewModel: ObservableObject {
     }
 
     func toggleShare(for comment: Post) {
-        // Share action is handled by presenting a share sheet in the view.
-        // This method exists to wire the share button to a no-op placeholder
-        // that can be replaced with a real share implementation.
+        // Share is now presented directly from PostDetailView via a ShareLink sheet.
+        // This method is retained for API compatibility but is no longer invoked by the view.
     }
 }
