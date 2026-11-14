@@ -68,10 +68,9 @@ class AccountRepository(private val client: SupabaseClientLib = SupabaseClient.c
                 val currentUser = client.auth.currentUserOrNull()
                     ?: throw Exception("User not authenticated")
 
-                val identities = client.from("user_identities")
-                    .select()
-                    .filter { eq("user_id", currentUser.id) }
-                    .decodeList<JsonObject>()
+                val identities = client.from("user_identities").select {
+                    filter { eq("user_id", currentUser.id) }
+                }.decodeList<JsonObject>()
 
                 val providers = identities.mapNotNull {
                     it["provider"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
