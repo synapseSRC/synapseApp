@@ -321,6 +321,8 @@ fun PostDetailScreen(
                 onCommentTextChange = { commentText = it },
                 commentIsSending = commentIsSending,
                 onCommentSendingChange = { commentIsSending = it },
+                selectedMediaUri = selectedMediaUri,
+                onMediaUriChange = { selectedMediaUri = it },
                 onSendComment = { content, mediaUri ->
                     if (uiState.editingComment != null) {
                         commentIsSending = true
@@ -621,7 +623,7 @@ private fun PostDetailBottomBar(
             onReplyingToClick = if (uiState.replyToParticipants.isNotEmpty()) onReplyingToClick else null,
             focusRequester = focusRequester,
             selectedMediaUri = selectedMediaUri,
-            onMediaUriChange = { selectedMediaUri = it }
+            onMediaUriChange = onMediaUriChange
         )
     }
 }
