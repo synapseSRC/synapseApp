@@ -156,7 +156,13 @@ class SettingsHubViewModel @Inject constructor(
             when (action) {
                 is SettingsAction.Toggle -> {
                     if (action.key == "notifications_global") {
-                        settingsRepository.setGlobalNotificationsEnabled(!action.currentValue)
+                        // Read the persisted state instead of the stale snapshot captured in
+                        // SettingsAction.Toggle.currentValue. The search-results flow is not
+                        // re-triggered after a toggle, so action.currentValue never reflects the
+                        // current preference and the toggle would write the wrong value / appear
+                        // unresponsive. Mirrors the toggle_dark_mode branch below.
+                        val current = settingsRepository.notificationPreferences.first().globalEnabled
+                        settingsRepository.setGlobalNotificationsEnabled(!current)
                     }
                 }
                 is SettingsAction.Execute -> {
