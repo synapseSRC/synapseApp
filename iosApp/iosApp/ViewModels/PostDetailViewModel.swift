@@ -184,7 +184,7 @@ class PostDetailViewModel: ObservableObject {
             postText: c.postText,
             postImage: c.postImage,
             postType: c.postType,
-            likesCount: c.userReaction == .like ? c.likesCount - 1 : c.likesCount + 1,
+            likesCount: c.userReaction == .like ? max(0, c.likesCount - 1) : c.likesCount + 1,
             commentsCount: c.commentsCount,
             viewsCount: c.viewsCount,
             resharesCount: c.resharesCount,
