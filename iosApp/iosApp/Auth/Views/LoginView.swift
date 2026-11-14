@@ -78,18 +78,6 @@ struct LoginView: View {
 
                 Spacer()
 
-                Text(String(localized: "auth_login_social_divider"))
-                    .font(.caption)
-                    .foregroundColor(.gray)
-
-                HStack(spacing: AppTheme.Spacing.space20) {
-                    Image(systemName: "applelogo")
-                        .font(.title)
-                    Image(systemName: "g.circle")
-                        .font(.title)
-                }
-                .padding(.bottom, 30) // component-specific footer inset; kept outside the foundation scale
-
                 HStack {
                     Text(String(localized: "auth_login_no_account"))
                         .font(.caption)
