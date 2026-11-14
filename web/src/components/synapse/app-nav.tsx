@@ -4,14 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-    BellIcon,
     HomeIcon,
-    InboxIcon,
     Loader2Icon,
     LogOutIcon,
     PaletteIcon,
-    SearchIcon,
-    SettingsIcon,
     UserIcon,
 } from "lucide-react";
 
@@ -21,10 +17,6 @@ import { cn } from "@/utils";
 
 const NAV_LINKS = [
     { href: "/home", label: "Feed", icon: HomeIcon },
-    { href: "/search", label: "Search", icon: SearchIcon },
-    { href: "/notifications", label: "Notifications", icon: BellIcon },
-    { href: "/inbox", label: "Messages", icon: InboxIcon },
-    { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 const SignOutButton = ({ className }: { className?: string }) => {
