@@ -68,6 +68,8 @@ fun FavouritesScreen(
     onBackClick: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    var showFavouritesInChatList by remember { mutableStateOf(true) }
+    var showFavouriteBadge by remember { mutableStateOf(true) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -131,16 +133,16 @@ fun FavouritesScreen(
                         title = stringResource(R.string.show_favourites_chat_list),
                         subtitle = stringResource(R.string.display_favourite_contacts_top),
                         imageVector = Icons.AutoMirrored.Filled.Chat,
-                        checked = true,
-                        onCheckedChange = { },
+                        checked = showFavouritesInChatList,
+                        onCheckedChange = { showFavouritesInChatList = it },
                         position = SettingsItemPosition.Top
                     )
                     SettingsToggleItem(
                         title = stringResource(R.string.show_favourite_badge),
                         subtitle = stringResource(R.string.display_star_icon),
                         imageVector = Icons.Filled.Favorite,
-                        checked = true,
-                        onCheckedChange = { },
+                        checked = showFavouriteBadge,
+                        onCheckedChange = { showFavouriteBadge = it },
                         position = SettingsItemPosition.Bottom
                     )
                 }
