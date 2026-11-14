@@ -474,8 +474,8 @@ internal fun ProfileContent(
                     onLikeClick = { viewModel.reactToPost(postCardState.post, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
                     onCommentClick = { PostDetailActivity.start(context, comment.postId, comment.userId) },
                     onShareClick = { PostShareUtils.shareComment(context, comment.content) },
-                    onRepostClick = { },
-                    onBookmarkClick = { },
+                    onRepostClick = { viewModel.resharePost(postCardState.post) },
+                    onBookmarkClick = { viewModel.toggleSave(postCardState.post) },
                     onUserClick = { comment.userId.let { onNavigateToUserProfile(it) } },
                     onPostClick = {
                         PostDetailActivity.start(context, comment.postId, comment.userId)
@@ -486,11 +486,11 @@ internal fun ProfileContent(
                             onOpenMediaViewer(urls, idx)
                         }
                     },
-                    onOptionsClick = { },
+                    onOptionsClick = { currentOnShowPostOptions(postCardState.post) },
                     showOptions = false,
                     onPollVote = { /* No polls in comments */ },
-                    onReactionSelected = null,
-                    onQuoteClick = { },
+                    onReactionSelected = { reaction -> viewModel.reactToPost(postCardState.post, reaction) },
+                    onQuoteClick = { currentOnNavigateToQuotePost(postCardState.post.id) },
                     modifier = Modifier.padding(bottom = Spacing.space8)
                 )
             }
