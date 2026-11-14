@@ -1123,13 +1123,15 @@ class SupabaseChatRepository(
     override suspend fun deleteGroup(chatId: String): Result<Unit> = withContext(AppDispatchers.IO) { groupRepository.deleteGroup(chatId) }
 
     override suspend fun toggleMessageReaction(messageId: String, emoji: String, chatId: String?): Result<Unit> = withContext(AppDispatchers.IO) {
-        reactionDataSource.toggleReaction(messageId, emoji, chatId).onSuccess {
-            getCurrentUserId()?.let { userId ->
-                val existing = reactionDao?.getByMessageId(messageId)?.find { it.userId == userId && it.reactionEmoji == emoji }
-                if (existing != null) reactionDao?.delete(messageId, userId, emoji)
-                else reactionDao?.insert(MessageReaction(messageId, userId, emoji, 0L))
-            }
+        reactionDataSource.toggleReaction(messageId, emoji, chatId).onFailure {
+            return@withContext Result.failure(it)
         }
+        getCurrentUserId()?.let { userId ->
+            val existing = reactionDao?.getByMessageId(messageId)?.find { it.userId == userId && it.reactionEmoji == emoji }
+            if (existing != null) reactionDao?.delete(messageId, userId, emoji)
+            else reactionDao?.insert(MessageReaction(messageId, userId, emoji, 0L))
+        }
+        Result.success(Unit)
     }
 
     override suspend fun getReactionsForMessage(messageId: String): Result<List<MessageReaction>> = withContext(AppDispatchers.IO) {
