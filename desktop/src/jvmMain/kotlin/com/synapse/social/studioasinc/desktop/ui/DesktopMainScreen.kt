@@ -44,7 +44,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -558,21 +557,12 @@ fun ChatDetailView(
                     shape = RoundedCornerShape(24.dp),
                     maxLines = 5
                 )
-                Spacer(modifier = Modifier.width(DesktopSpacing.space8))
-                IconButton(
-                    onClick = {
-                        if (messageText.isNotBlank()) {
-                            onSendMessage(messageText)
-                            messageText = ""
-                        } else {
-                            /* TODO: implement Mic click */
-                        }
-                    },
-                    enabled = true
-                ) {
-                    if (messageText.isBlank()) {
-                        Icon(Icons.Default.Mic, contentDescription = "Mic", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    } else {
+                if (messageText.isNotBlank()) {
+                    Spacer(modifier = Modifier.width(DesktopSpacing.space8))
+                    IconButton(
+                        onClick = { onSendMessage(messageText); messageText = "" },
+                        enabled = true
+                    ) {
                         Icon(Icons.Default.ArrowUpward, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
