@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PostDetailView: View {
     @StateObject private var viewModel: PostDetailViewModel
+    @FocusState private var commentFieldFocused: Bool
 
     init(postId: String) {
         _viewModel = StateObject(wrappedValue: PostDetailViewModel(postId: postId))
@@ -35,7 +36,7 @@ struct PostDetailView: View {
                     PostCardView(
                         post: viewModel.post,
                         onLike: { viewModel.toggleLike() },
-                        onComment: { /* Scroll to comment field */ },
+                        onComment: { commentFieldFocused = true },
                         onShare: { viewModel.toggleShare() },
                         onBookmark: { viewModel.toggleBookmark() }
                     )
@@ -75,7 +76,7 @@ struct PostDetailView: View {
                                     PostCardView(
                                         post: comment,
                                         onLike: { viewModel.toggleLike(for: comment) },
-                                        onComment: { /* Scroll to comment input */ },
+                                        onComment: { commentFieldFocused = true },
                                         onShare: { viewModel.toggleShare(for: comment) },
                                         onBookmark: { viewModel.toggleBookmark(for: comment) },
                                         onMoreOptions: { /* More options menu */ }
@@ -95,6 +96,7 @@ struct PostDetailView: View {
             HStack {
                 TextField("Add a comment...", text: $viewModel.commentText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .focused($commentFieldFocused)
                     .disabled(viewModel.isSubmittingComment)
 
                 Button(action: {
