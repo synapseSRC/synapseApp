@@ -100,7 +100,8 @@ fun PostCard(
     onReactionSelected: ((ReactionType) -> Unit)? = null,
     onUsernameSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier,
-    isLikeLoading: Boolean = false
+    isLikeLoading: Boolean = false,
+    showOptions: Boolean = true
 ) {
     var showReactionPicker by remember { mutableStateOf(false) }
 
@@ -220,6 +221,7 @@ fun PostCard(
                     timestamp = if (state.isExpanded) "" else state.formattedTimestamp,
                     onUserClick = onUserClick,
                     onOptionsClick = onOptionsClick,
+                    showOptions = showOptions,
                     feeling = state.post.metadata?.feeling,
                     locationName = state.post.locationName,
                     taggedPeople = state.post.metadata?.taggedPeople ?: emptyList(),
