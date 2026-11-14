@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct PrivacySettingsView: View {
-    @State private var isPrivate = false
-    @State private var whoCanMessageMe = "Everyone"
-    @State private var twoFactorEnabled = false
+    @AppStorage("privacy_isPrivate") private var isPrivate = false
+    @AppStorage("privacy_whoCanMessageMe") private var whoCanMessageMe = "Everyone"
+    @AppStorage("privacy_twoFactorEnabled") private var twoFactorEnabled = false
 
     var body: some View {
         Form {
