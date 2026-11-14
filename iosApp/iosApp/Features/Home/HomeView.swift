@@ -5,6 +5,7 @@ struct HomeView: View {
     @StateObject private var viewModel = DependencyContainer.shared.makeHomeViewModel()
     @State private var showPostOptions = false
     @State private var optionsPost: Post?
+    @State private var postToShare: Post?
 
     var body: some View {
         NavigationStack(path: $navigator.homePath) {
@@ -29,7 +30,7 @@ struct HomeView: View {
                                         post: post,
                                         onLike: { viewModel.toggleLike(for: post) },
                                         onComment: { /* handled by nav */ },
-                                        onShare: { /* share action */ },
+                                        onShare: { postToShare = post },
                                         onBookmark: { viewModel.toggleBookmark(for: post) },
                                         onMoreOptions: {
                                             optionsPost = post
@@ -82,7 +83,11 @@ struct HomeView: View {
                 }
             }
             .confirmationDialog("Post Options", isPresented: $showPostOptions, titleVisibility: .visible) {
-                Button("Share") { /* share post */ }
+                Button("Share") {
+                    if let post = optionsPost {
+                        postToShare = post
+                    }
+                }
                 Button("Bookmark") {
                     if let post = optionsPost {
                         viewModel.toggleBookmark(for: post)
@@ -94,6 +99,13 @@ struct HomeView: View {
                 if let post = optionsPost {
                     Text("Actions for post by \(post.displayName ?? post.username ?? "Unknown")")
                 }
+            }
+            .sheet(item: $postToShare) { post in
+                ShareLink(
+                    item: "https://synapse.app/posts/\(post.id)",
+                    message: Text(post.postText ?? ""),
+                    subject: Text("Shared post")
+                )
             }
             .onAppear {
                 viewModel.fetchHomeData()
