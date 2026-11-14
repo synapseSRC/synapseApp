@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -42,14 +44,32 @@ fun PostOptionsBottomSheet(
     onCopyLink: () -> Unit,
     onBookmark: () -> Unit,
     onReshare: () -> Unit = {},
-    onToggleComments: () -> Unit,
+    onToggleComments: suspend () -> Result<Unit>,
     onReport: () -> Unit,
-    onBlock: () -> Unit,
+    onBlock: suspend () -> Result<Unit>,
     onRevokeVote: () -> Unit,
     onSummarize: () -> Unit = {},
     onShareToChat: (() -> Unit)? = null
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val onToggleCommentsAction: () -> Unit = {
+        scope.launch {
+            val result = onToggleComments()
+            if (result.isSuccess) {
+                onDismiss()
+            }
+        }
+    }
+    val onBlockAction: () -> Unit = {
+        scope.launch {
+            val result = onBlock()
+            if (result.isSuccess) {
+                onDismiss()
+            }
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -110,9 +130,9 @@ fun PostOptionsBottomSheet(
                 onEdit = { onEdit(); onDismiss() },
                 onDelete = { showDeleteDialog = true },
                 onAddToThread = { onAddToThread?.invoke(); onDismiss() },
-                onToggleComments = { onToggleComments(); onDismiss() },
+                onToggleComments = onToggleCommentsAction,
                 onReport = { onReport(); onDismiss() },
-                onBlock = { onBlock(); onDismiss() },
+                onBlock = onBlockAction,
                 onShare = { onShare(); onDismiss() },
                 onRevokeVote = { onRevokeVote(); onDismiss() },
                 onSummarize = { onSummarize(); onDismiss() },

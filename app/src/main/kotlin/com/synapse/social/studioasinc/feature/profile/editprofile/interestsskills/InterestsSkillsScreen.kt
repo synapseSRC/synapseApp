@@ -258,26 +258,26 @@ fun InterestsSkillsScreen(
                                             verticalArrangement = Arrangement.spacedBy(Spacing.space8)
                                         ) {
                                             uiState.interests.forEachIndexed { index, interest ->
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(text = interest)
-                                                Spacer(modifier = Modifier.width(Spacing.space8))
-                                                IconButton(
-                                                    onClick = { viewModel.onEvent(InterestsSkillsEvent.RemoveInterest(index)) },
-                                                    modifier = Modifier.size(24.dp)
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    Icon(
-                                                        imageVector = Icons.Filled.Close,
-                                                        contentDescription = stringResource(
-                                                            R.string.remove_interest_content_description,
-                                                            interest
-                                                        ),
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
+                                                    Text(text = interest)
+                                                    Spacer(modifier = Modifier.width(Spacing.space8))
+                                                    IconButton(
+                                                        onClick = { viewModel.onEvent(InterestsSkillsEvent.RemoveInterest(index)) },
+                                                        modifier = Modifier.size(24.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Filled.Close,
+                                                            contentDescription = stringResource(
+                                                                R.string.remove_interest_content_description,
+                                                                interest
+                                                            ),
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                    }
                                                 }
                                             }
-                                        }
                                         }
 
                                         Spacer(modifier = Modifier.height(Spacing.space16))

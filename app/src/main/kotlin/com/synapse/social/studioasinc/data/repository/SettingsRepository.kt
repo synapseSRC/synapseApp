@@ -144,7 +144,6 @@ interface SettingsRepository {
 
 
     suspend fun updateNotificationPreference(category: NotificationCategory, enabled: Boolean)
-
     suspend fun setGlobalNotificationsEnabled(enabled: Boolean)
 
     suspend fun setInAppNotificationsEnabled(enabled: Boolean)
@@ -313,4 +312,8 @@ interface SettingsRepository {
     suspend fun setAutoplayAnimationsEnabled(enabled: Boolean)
     val typingIndicatorsEnabled: Flow<Boolean>
     suspend fun setTypingIndicatorsEnabled(enabled: Boolean)
+    val showFavouritesInChatList: Flow<Boolean>
+    suspend fun setShowFavouritesInChatList(enabled: Boolean)
+    val showFavouriteBadge: Flow<Boolean>
+    suspend fun setShowFavouriteBadge(enabled: Boolean)
 }

@@ -683,7 +683,8 @@ fun SettingsNavHost(
             FavouritesScreen(
                 onBackClick = {
                     navController.popBackStack()
-                }
+                },
+                settingsRepository = settingsRepository
             )
         }
 

@@ -229,7 +229,7 @@ class AccountSettingsViewModel @Inject constructor(
             // Verify current password
             authRepository.signIn(email, currentPassword)
                 .onSuccess {
-                    authRepository.updatePassword(newPassword)
+                    authRepository.updatePassword(newPassword, "")
                         .onSuccess {
                             android.util.Log.d("AccountSettingsViewModel", "Password changed successfully")
                             _showChangePasswordDialog.value = false

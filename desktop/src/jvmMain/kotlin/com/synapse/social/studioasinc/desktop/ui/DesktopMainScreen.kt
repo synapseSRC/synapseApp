@@ -43,11 +43,9 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.EmojiEmotions
-import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.DoneAll
@@ -455,15 +453,6 @@ fun ChatDetailView(
                 ) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Video call") } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = { /* TODO: implement Video call */ }) {
-                            Icon(Icons.Default.Videocam, contentDescription = "Video call")
-                        }
-                    }
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("Voice call") } },
                         state = rememberTooltipState()
                     ) {
@@ -556,15 +545,6 @@ fun ChatDetailView(
                 modifier = Modifier.padding(DesktopSpacing.space16),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                    tooltip = { PlainTooltip { Text("Attach file") } },
-                    state = rememberTooltipState()
-                ) {
-                    IconButton(onClick = { /* TODO: implement Attach file */ }) {
-                        Icon(Icons.Default.AddCircleOutline, contentDescription = "Attach file")
-                    }
-                }
                 TooltipBox(
                     positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                     tooltip = { PlainTooltip { Text("Emoji") } },

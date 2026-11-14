@@ -29,9 +29,7 @@ class StoryViewerActivity : AppCompatActivity() {
                     userIds = userIds,
                     initialIndex = initialIndex,
                     onClose = { finish() },
-                    onNavigateToProfile = { userId ->
-                        IntentUtils.openUrl(this@StoryViewerActivity, DeepLink.profile(userId))
-                    }
+                    onNavigateToProfile = { userId -> IntentUtils.openUrl(this, "synapse://profile/$userId") }
                 )
             }
         }

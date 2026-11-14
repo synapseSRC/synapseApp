@@ -13,7 +13,10 @@ import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCa
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetPostsByHashtagUseCase
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.QuotePostUseCase
 import com.synapse.social.studioasinc.domain.usecase.reaction.PopulatePostReactionsUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.post.TogglePostCommentsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,7 +43,10 @@ class HashtagFeedViewModel @Inject constructor(
     private val unrepostPostUseCase: UnrepostPostUseCase,
     private val populatePostPollsUseCase: PopulatePostPollsUseCase,
     private val populatePostReactionsUseCase: PopulatePostReactionsUseCase,
-    private val authRepository: AuthRepository
+    private val quotePostUseCase: QuotePostUseCase,
+    private val authRepository: AuthRepository,
+    private val togglePostCommentsUseCase: TogglePostCommentsUseCase,
+    private val blockUserUseCase: BlockUserUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HashtagFeedUiState())
@@ -173,7 +179,48 @@ class HashtagFeedViewModel @Inject constructor(
         }
     }
 
+    fun quotePost(post: Post, text: String) {
+        viewModelScope.launch {
+            val result = quotePostUseCase(post.id, text)
+            result.onSuccess {
+                // Quote created
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message ?: "Failed to quote post") }
+            }
+        }
+    }
+
     fun isPostOwner(post: Post): Boolean {
         return authRepository.getCurrentUserId() == post.authorUid
+    }
+
+    fun toggleComments(postId: String) {
+        viewModelScope.launch {
+            togglePostCommentsUseCase(postId).collect { result ->
+                result.onSuccess {
+                    _uiState.update { state ->
+                        state.copy(posts = state.posts.map { post ->
+                            if (post.id == postId) {
+                                val currentlyDisabled = post.postDisableReplies == "true"
+                                post.copy(postDisableReplies = if (currentlyDisabled) null else "true")
+                            } else post
+                        })
+                    }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message) }
+                }
+            }
+        }
+    }
+
+    fun blockUser(userId: String) {
+        viewModelScope.launch {
+            val result = blockUserUseCase(userId)
+            result.onSuccess {
+                // Block succeeded server-side; the post remains visible until the feed refreshes.
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message) }
+            }
+        }
     }
 }

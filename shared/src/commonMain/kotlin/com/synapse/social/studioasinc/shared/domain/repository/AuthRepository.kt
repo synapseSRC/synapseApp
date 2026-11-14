@@ -18,7 +18,7 @@ interface AuthRepository {
     fun restoreSession(): Boolean
     suspend fun sendPasswordResetEmail(email: String): Result<Unit>
     suspend fun resendVerificationEmail(email: String): Result<Unit>
-    suspend fun updatePassword(password: String): Result<Unit>
+    suspend fun updatePassword(password: String, resetToken: String): Result<Unit>
     suspend fun resetPassword(password: String, token: String): Result<Unit>
     suspend fun updatePhoneNumber(phone: String): Result<Unit>
     suspend fun getOAuthUrl(provider: String, redirectUrl: String): Result<String>

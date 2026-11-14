@@ -34,8 +34,8 @@ fun HashtagFeedScreen(
     onBack: () -> Unit,
     onNavigateToPost: (postId: String, commentId: String?) -> Unit,
     onNavigateToProfile: (String) -> Unit,
-    onNavigateToEditPost: (String) -> Unit,
-    onNavigateToQuotePost: (String) -> Unit
+    onNavigateToQuotePost: (String) -> Unit,
+    onNavigateToEditPost: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -43,6 +43,7 @@ fun HashtagFeedScreen(
     var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedMediaIndex by remember { mutableIntStateOf(0) }
     var selectedPost by remember { mutableStateOf<Post?>(null) }
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val postLinkLabel = stringResource(R.string.clip_label_post_link)
 
@@ -78,7 +79,7 @@ fun HashtagFeedScreen(
                             PostActions(
                                 onLike = { p -> viewModel.reactToPost(p, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
                                 onComment = { p -> onNavigateToPost(p.rootPostId ?: p.inReplyToPostId ?: p.id, if (p.rootPostId != null || p.inReplyToPostId != null) p.id else null) },
-                                onShare = { p -> PostShareUtils.sharePost(context, p.id) },
+                                onShare = { post -> PostShareUtils.sharePost(context, post.id) },
                                 onRepost = viewModel::resharePost,
                                 onQuote = { post -> onNavigateToQuotePost(post.id) },
                                 onBookmark = viewModel::bookmarkPost,
@@ -136,13 +137,15 @@ fun HashtagFeedScreen(
                     selectedPost = null
                 },
                 onToggleComments = {
-                    selectedPost = null
+                    viewModel.toggleComments(post.id)
+                    Result.success(Unit)
                 },
                 onReport = {
                     selectedPost = null
                 },
                 onBlock = {
-                    selectedPost = null
+                    viewModel.blockUser(post.authorUid)
+                    Result.success(Unit)
                 },
                 onRevokeVote = {
                     selectedPost = null

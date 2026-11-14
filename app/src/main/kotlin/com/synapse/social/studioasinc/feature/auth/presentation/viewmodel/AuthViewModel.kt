@@ -63,6 +63,7 @@ class AuthViewModel @Inject constructor(
     private var cooldownJob: Job? = null
     private val RESEND_COOLDOWN_SECONDS = 60
     private var usernameCheckJob: Job? = null
+    private var resetToken: String = ""
 
     fun onEmailChanged(email: String) {
         val isValid = validateEmailUseCase(email) is ValidationResult.Valid
@@ -355,8 +356,8 @@ class AuthViewModel @Inject constructor(
             handleOAuthCallbackUseCase(deepLink).fold(
                 onSuccess = {
                     if (deepLink.type == "recovery") {
-                        val resetToken = deepLink.accessToken ?: deepLink.code ?: ""
-                        _uiState.value = AuthUiState.ResetPassword(token = resetToken)
+                        resetToken = deepLink.accessToken ?: deepLink.code ?: ""
+                        _uiState.value = AuthUiState.ResetPassword()
                         _navigationEvent.emit(AuthNavigationEvent.NavigateToResetPassword(resetToken))
                     } else {
                         _navigationEvent.emit(AuthNavigationEvent.NavigateToMain)
@@ -473,9 +474,10 @@ class AuthViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true)
-            resetPasswordUseCase(state.password, state.token).fold(
+            resetPasswordUseCase(state.password, resetToken).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false)
+                    resetToken = ""
                     _navigationEvent.emit(AuthNavigationEvent.NavigateToSignIn)
                 },
                 onFailure = { error ->

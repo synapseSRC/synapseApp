@@ -100,7 +100,8 @@ class DomainSettingsRepositoryAdapter @Inject constructor(
     override val notificationPreferences: Flow<NotificationPreferences> = delegate.notificationPreferences.map { it.toDomain() }
     override suspend fun updateNotificationPreference(category: NotificationCategory, enabled: Boolean) =
         delegate.updateNotificationPreference(UiNotificationCategory.valueOf(category.name), enabled)
-    override suspend fun setGlobalNotificationsEnabled(enabled: Boolean) = delegate.setGlobalNotificationsEnabled(enabled)
+    override suspend fun setGlobalNotificationsEnabled(enabled: Boolean) =
+        delegate.setGlobalNotificationsEnabled(enabled)
     override suspend fun setInAppNotificationsEnabled(enabled: Boolean) = delegate.setInAppNotificationsEnabled(enabled)
     override suspend fun setReadReceiptsEnabled(enabled: Boolean) = delegate.setReadReceiptsEnabled(enabled)
 

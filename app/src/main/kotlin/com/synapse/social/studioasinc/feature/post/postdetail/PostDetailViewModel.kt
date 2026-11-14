@@ -127,6 +127,17 @@ class PostDetailViewModel @Inject constructor(
         }
     }
 
+    fun retryLoadPost() {
+        if (_uiState.value.isLoading) return
+        _uiState.update { it.copy(error = null) }
+        val postId = currentPostId
+        val root = rootCommentId
+        if (postId == null) return
+        currentPostId = null
+        rootCommentId = null
+        loadPost(postId, root)
+    }
+
     private val pendingViewedCommentIds = mutableSetOf<String>()
     private var flushViewsJob: kotlinx.coroutines.Job? = null
 
@@ -479,42 +490,39 @@ class PostDetailViewModel @Inject constructor(
         }
     }
 
-    fun toggleComments() {
-        val postId = currentPostId ?: return
-        val currentPost = _uiState.value.post ?: return
+    suspend fun toggleComments(): Result<Unit> {
+        val postId = currentPostId ?: return Result.failure(IllegalStateException("No post ID"))
+        val currentPost = _uiState.value.post ?: return Result.failure(IllegalStateException("No post"))
 
         val isCurrentlyDisabled = currentPost.post.postDisableReplies == "true"
         val newDisableValue = if (isCurrentlyDisabled) "false" else "true"
 
-        viewModelScope.launch {
-            val optimisticPost = currentPost.copy(
-                post = currentPost.post.copy(postDisableReplies = newDisableValue)
-            )
+        val optimisticPost = currentPost.copy(
+            post = currentPost.post.copy(postDisableReplies = newDisableValue)
+        )
 
-            _uiState.update { it.copy(post = optimisticPost) }
-            PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
+        _uiState.update { it.copy(post = optimisticPost) }
+        PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
 
-            postActionsRepository.toggleComments(postId).onFailure { e ->
+        return postActionsRepository.toggleComments(postId)
+            .onFailure { e ->
                 _uiState.update { it.copy(post = currentPost) }
                 PostEventBus.emit(PostEvent.Updated(currentPost.post))
             }
-        }
     }
 
-    fun blockUser(userId: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(blockSuccess = false, blockError = null) }
-            
-            blockUserUseCase(userId)
-                .onSuccess {
-                    _uiState.update { it.copy(blockSuccess = true) }
+    suspend fun blockUser(userId: String): Result<Unit> {
+        _uiState.update { it.copy(blockSuccess = false, blockError = null) }
+
+        return blockUserUseCase(userId)
+            .onSuccess {
+                _uiState.update { it.copy(blockSuccess = true) }
+            }
+            .onFailure { error ->
+                _uiState.update {
+                    it.copy(blockError = error.message ?: "Failed to block user")
                 }
-                .onFailure { error ->
-                    _uiState.update { 
-                        it.copy(blockError = error.message ?: "Failed to block user")
-                    }
-                }
-        }
+            }
     }
     
     fun clearBlockStatus() {

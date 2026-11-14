@@ -240,10 +240,7 @@ class LanguageRegionViewModel @Inject constructor(
 
 
 
-    fun navigateToRegionPreferences() {
-        android.util.Log.d("LanguageRegionViewModel", "Navigate to region preferences")
 
-    }
 
 
 

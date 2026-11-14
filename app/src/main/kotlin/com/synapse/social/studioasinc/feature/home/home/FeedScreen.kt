@@ -28,6 +28,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -90,6 +91,7 @@ fun FeedScreen(
     var showSummarySheet by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var showMediaViewer by remember { mutableStateOf(false) }
     var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -364,9 +366,15 @@ fun FeedScreen(
             },
             onCopyLink = { PostShareUtils.copyPostLink(context, post.id) },
             onBookmark = { viewModel.bookmarkPost(post) },
-            onToggleComments = { viewModel.toggleComments(post) },
+            onToggleComments = {
+                viewModel.toggleComments(post)
+                Result.success(Unit)
+            },
             onReport = { postToReport = post; showReportDialog = true },
-            onBlock = { viewModel.blockUser(post.authorUid) },
+            onBlock = {
+                viewModel.blockUser(post.authorUid)
+                Result.success(Unit)
+            },
             onRevokeVote = { viewModel.revokeVote(post) },
             onSummarize = {
                 showSummarySheet = true

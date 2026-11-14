@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.synapse.social.studioasinc.core.util.IntentUtils
 import com.synapse.social.studioasinc.feature.auth.ui.components.LoadingOverlay
 import com.synapse.social.studioasinc.feature.auth.ui.models.AuthNavigationEvent
@@ -52,10 +53,7 @@ fun AuthScreen(
                 navController.navigate("emailVerification/$encodedEmail")
             }
             is AuthNavigationEvent.NavigateToForgotPassword -> navController.navigate("forgotPassword")
-            is AuthNavigationEvent.NavigateToResetPassword -> {
-                val encodedToken = android.net.Uri.encode(event.token)
-                navController.navigate("resetPassword/$encodedToken")
-            }
+            is AuthNavigationEvent.NavigateToResetPassword -> navController.navigate("resetPassword?token=${event.token}")
             is AuthNavigationEvent.NavigateBack -> navController.popBackStack()
             is AuthNavigationEvent.OpenUrl -> IntentUtils.openUrl(context, event.url)
             is AuthNavigationEvent.InitiateGoogleSignIn -> {
@@ -153,7 +151,7 @@ fun AuthScreen(
             }
 
             composable(
-                route = "resetPassword/{token}",
+                route = "resetPassword",
                 arguments = listOf(androidx.navigation.navArgument("token") { type = androidx.navigation.NavType.StringType })
             ) { backStackEntry ->
                 val token = backStackEntry.arguments?.getString("token") ?: ""
@@ -161,7 +159,7 @@ fun AuthScreen(
                 val state by viewModel.uiState.collectAsState()
 
                 LaunchedEffect(token) {
-                    viewModel.initToken(token)
+                    viewModel.setResetToken(token)
                 }
 
                 LaunchedEffect(Unit) {

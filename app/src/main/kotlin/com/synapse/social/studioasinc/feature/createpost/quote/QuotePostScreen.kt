@@ -23,13 +23,17 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 @Composable
 fun QuotePostScreen(
     viewModel: QuotePostViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToPost: (postId: String, commentId: String?) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
     var quoteText by remember { mutableStateOf("") }
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
+            state.post?.let { post ->
+                onNavigateToPost(post.id, null)
+            }
             onNavigateBack()
         }
     }

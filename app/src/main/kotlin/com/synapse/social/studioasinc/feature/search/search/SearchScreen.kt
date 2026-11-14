@@ -541,7 +541,7 @@ onMediaClick = { post, index ->
             },
             onToggleComments = {
                 viewModel.toggleComments(post)
-                selectedPost = null
+                Result.success(Unit)
             },
             onReport = {
                 viewModel.reportPost(post)
@@ -549,7 +549,7 @@ onMediaClick = { post, index ->
             },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
-                selectedPost = null
+                Result.success(Unit)
             },
             onRevokeVote = {
                 viewModel.revokeVote(post)

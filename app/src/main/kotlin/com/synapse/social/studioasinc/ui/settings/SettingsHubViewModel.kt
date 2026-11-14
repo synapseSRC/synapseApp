@@ -156,7 +156,14 @@ class SettingsHubViewModel @Inject constructor(
             when (action) {
                 is SettingsAction.Toggle -> {
                     if (action.key == "notifications_global") {
-                        settingsRepository.setGlobalNotificationsEnabled(!action.currentValue)
+                        val enabled = !action.currentValue
+                        try {
+                            settingsRepository.setGlobalNotificationsEnabled(enabled)
+                        } catch (_: Exception) {
+                            android.util.Log.e("SettingsHubViewModel", "Failed to update global notifications preference.")
+                        }
+                    } else {
+                        android.util.Log.d("SettingsHubViewModel", "Unhandled toggle action key: ${action.key}")
                     }
                 }
                 is SettingsAction.Execute -> {
