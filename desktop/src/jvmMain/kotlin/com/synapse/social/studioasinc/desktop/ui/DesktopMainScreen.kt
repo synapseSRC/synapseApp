@@ -545,15 +545,7 @@ fun ChatDetailView(
                 modifier = Modifier.padding(DesktopSpacing.space16),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                    tooltip = { PlainTooltip { Text("Emoji") } },
-                    state = rememberTooltipState()
-                ) {
-                    IconButton(onClick = { /* TODO: implement Emoji */ }) {
-                        Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
-                    }
-                }
+                Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
                 Spacer(modifier = Modifier.width(DesktopSpacing.space4))
                 OutlinedTextField(
                     value = messageText,
