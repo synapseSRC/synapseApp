@@ -6,6 +6,8 @@ struct HomeView: View {
     @State private var showPostOptions = false
     @State private var optionsPost: Post?
     @State private var postToShare: Post?
+    @State private var showReportConfirmation = false
+    @State private var reportSubmitted = false
 
     var body: some View {
         NavigationStack(path: $navigator.homePath) {
@@ -93,7 +95,9 @@ struct HomeView: View {
                         viewModel.toggleBookmark(for: post)
                     }
                 }
-                Button("Report", role: .destructive) { /* report post */ }
+                Button("Report", role: .destructive) {
+                    showReportConfirmation = true
+                }
                 Button("Cancel", role: .cancel) { }
             } message: {
                 if let post = optionsPost {
@@ -106,6 +110,19 @@ struct HomeView: View {
                     message: Text(post.postText ?? ""),
                     subject: Text("Shared post")
                 )
+            }
+            .alert("Report post", isPresented: $showReportConfirmation) {
+                Button("Report", role: .destructive) {
+                    reportSubmitted = true
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Report this post to moderation?")
+            }
+            .alert("Report submitted", isPresented: $reportSubmitted) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your report has been received client-side.")
             }
             .onAppear {
                 viewModel.fetchHomeData()
