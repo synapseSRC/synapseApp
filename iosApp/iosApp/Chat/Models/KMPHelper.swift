@@ -31,6 +31,11 @@ class KMPHelper {
 
     let getUserProfileUseCase: shared.GetUserProfileUseCase
 
+    // Follow graph use cases (wired to FollowRepositoryImpl)
+    let followRepository: shared.FollowRepository
+    let getFollowersUseCase: shared.GetFollowersUseCase
+    let getFollowingUseCase: shared.GetFollowingUseCase
+
     let sharedImageLoader: shared.SharedImageLoader
 
     let getNotificationsUseCase: shared.GetNotificationsUseCase
@@ -90,6 +95,12 @@ class KMPHelper {
 
         let userRepository = shared.IOSDependencies.shared.getUserRepository()
         self.getUserProfileUseCase = shared.GetUserProfileUseCase(userRepository: userRepository)
+
+        // Follow graph: repository + use cases backed by Supabase follows/users tables
+        let followRepository = shared.FollowRepositoryImpl(client: shared.SupabaseClient.shared.client)
+        self.followRepository = followRepository
+        self.getFollowersUseCase = shared.GetFollowersUseCase(followRepository: followRepository)
+        self.getFollowingUseCase = shared.GetFollowingUseCase(followRepository: followRepository)
 
         self.sharedImageLoader = shared.SharedImageLoader(httpClient: shared.Ktor_client_coreHttpClient())
 

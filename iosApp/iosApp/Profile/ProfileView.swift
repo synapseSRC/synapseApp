@@ -32,7 +32,7 @@ struct ProfileView: View {
                         .padding(.horizontal)
 
                     HStack(spacing: AppTheme.Spacing.space40) {
-                        NavigationLink(destination: FollowersFollowingView()) {
+                        NavigationLink(destination: FollowersFollowingView(userId: viewModel.user?.uid ?? "")) {
                             VStack {
                                 AnimatedCounter(
                                     count: Int(viewModel.user?.followersCount ?? 0),
@@ -45,7 +45,7 @@ struct ProfileView: View {
                         .foregroundColor(.primary)
                         .accessibilityLabel("\(viewModel.user?.followersCount ?? 0) followers")
 
-                        NavigationLink(destination: FollowersFollowingView()) {
+                        NavigationLink(destination: FollowersFollowingView(userId: viewModel.user?.uid ?? "")) {
                             VStack {
                                 AnimatedCounter(
                                     count: Int(viewModel.user?.followingCount ?? 0),
