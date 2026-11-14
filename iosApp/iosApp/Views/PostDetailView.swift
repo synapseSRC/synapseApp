@@ -3,6 +3,7 @@ import SwiftUI
 struct PostDetailView: View {
     @StateObject private var viewModel: PostDetailViewModel
     @FocusState private var commentFieldFocused: Bool
+    @State private var postToShare: Post?
 
     init(postId: String) {
         _viewModel = StateObject(wrappedValue: PostDetailViewModel(postId: postId))
@@ -37,7 +38,7 @@ struct PostDetailView: View {
                         post: viewModel.post,
                         onLike: { viewModel.toggleLike() },
                         onComment: { commentFieldFocused = true },
-                        onShare: { viewModel.toggleShare() },
+                        onShare: { postToShare = viewModel.post },
                         onBookmark: { viewModel.toggleBookmark() }
                     )
 
@@ -77,7 +78,7 @@ struct PostDetailView: View {
                                         post: comment,
                                         onLike: { viewModel.toggleLike(for: comment) },
                                         onComment: { commentFieldFocused = true },
-                                        onShare: { viewModel.toggleShare(for: comment) },
+                                        onShare: { postToShare = comment },
                                         onBookmark: { viewModel.toggleBookmark(for: comment) },
                                         onMoreOptions: { /* More options menu */ }
                                     )
@@ -128,6 +129,13 @@ struct PostDetailView: View {
                 isSummarizing: viewModel.isSummarizing,
                 summary: viewModel.summary,
                 error: viewModel.summaryError
+            )
+        }
+        .sheet(item: $postToShare) { post in
+            ShareLink(
+                item: "https://synapse.app/posts/\(post.id)",
+                message: Text(post.postText ?? ""),
+                subject: Text("Shared post")
             )
         }
     }
