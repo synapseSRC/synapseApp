@@ -30,7 +30,7 @@ struct HomeFeedView: View {
                                         post: post,
                                         onLike: { viewModel.toggleLike(for: post) },
                                         onComment: { /* Handled by navigation */ },
-                                        onShare: { /* Share action */ },
+                                        onShare: { viewModel.toggleShare(for: post) },
                                         onBookmark: { viewModel.toggleBookmark(for: post) },
                                         onMoreOptions: { /* More options */ }
                                     )
