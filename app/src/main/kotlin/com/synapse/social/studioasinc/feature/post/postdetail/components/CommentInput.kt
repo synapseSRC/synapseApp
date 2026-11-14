@@ -119,7 +119,7 @@ fun CommentInput(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        if (selectedMediaUri.value != null) {
+                        if (selectedMediaUri != null) {
                             Box(
                                 modifier = Modifier
                                     .padding(start = Spacing.space16, end = Spacing.space16, top = Spacing.space12)
@@ -128,7 +128,7 @@ fun CommentInput(
                                     .border(Sizes.BorderThin, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(Sizes.CornerDefault))
                             ) {
                                 AsyncImage(
-                                    model = selectedMediaUri.value,
+                                    model = selectedMediaUri,
                                     contentDescription = "Selected media",
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop

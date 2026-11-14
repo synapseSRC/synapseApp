@@ -586,7 +586,9 @@ private fun PostDetailBottomBar(
     onCommentTextChange: (String) -> Unit,
     commentIsSending: Boolean,
     onCommentSendingChange: (Boolean) -> Unit,
-    onSendComment: (String, android.net.Uri?) -> Unit
+    onSendComment: (String, android.net.Uri?) -> Unit,
+    selectedMediaUri: Uri?,
+    onMediaUriChange: (Uri?) -> Unit
 ) {
     Column(
         modifier = Modifier
