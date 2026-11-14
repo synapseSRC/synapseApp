@@ -212,11 +212,15 @@ fun SettingsCommandPaletteResults(
                 SettingsListItem(
                     title = node.title,
                     subtitle = node.subtitle,
-                    onClick = {
-                        when {
-                            toggleAction != null -> onActionClick(toggleAction)
-                            navigateDestination != null -> onNavigate(navigateDestination)
-                            action != null -> onActionClick(action)
+                    onClick = if (toggleAction != null) {
+                        null
+                    } else {
+                        {
+                            when {
+                                navigateDestination != null -> onNavigate(navigateDestination)
+                                action != null -> onActionClick(action)
+                                else -> {}
+                            }
                         }
                     },
                     trailingContent = if (toggleAction != null) {
