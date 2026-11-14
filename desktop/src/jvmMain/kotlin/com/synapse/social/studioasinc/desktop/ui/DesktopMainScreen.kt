@@ -114,15 +114,7 @@ fun DesktopMainScreen(
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.weight(1f)
                         )
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                            tooltip = { PlainTooltip { Text("Menu") } },
-                            state = rememberTooltipState()
-                        ) {
-                            IconButton(onClick = { /* TODO: implement Menu */ }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                            }
-                        }
+                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                     }
 
                     var localQuery by remember { mutableStateOf("") }
