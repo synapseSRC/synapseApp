@@ -1,6 +1,6 @@
 import SwiftUI
 struct AccountSettingsView: View {
-    @State private var email = ""
+    @AppStorage("account_email") private var email = ""
     var body: some View {
         Form {
             Section(header: Text("Contact Info")) {
