@@ -129,7 +129,7 @@ struct PostCardView: View {
                     icon: "arrow.2.squarepath",
                     color: post.isReshared ? .green : .secondary,
                     count: post.resharesCount,
-                    accessibilityLabel: "Share post",
+                    accessibilityLabel: post.isReshared ? "Unshare post" : "Share post",
                     action: onShare
                 )
 
