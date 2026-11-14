@@ -133,6 +133,14 @@ class FeedViewModel: ObservableObject {
         }
     }
 
+    func toggleShare(for post: Post) {
+        if let index = posts.firstIndex(where: { $0.id == post.id }) {
+            var updatedPost = posts[index]
+            updatedPost.isReshared.toggle()
+            posts[index] = updatedPost
+        }
+    }
+
     private func generateMockPosts(isRefresh: Bool = false) -> [Post] {
         let prefix = isRefresh ? "Refreshed" : "Post"
         return [
