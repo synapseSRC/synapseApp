@@ -73,7 +73,8 @@ fun PostInteractionBar(
     onBookmarkClick: () -> Unit,
     onReactionLongPress: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    isComment: Boolean = false
 ) {
     val haptic = LocalHapticFeedback.current
     var showRepostMenu by remember { mutableStateOf(false) }
@@ -119,7 +120,7 @@ fun PostInteractionBar(
             }
 
             // Repost
-            Box {
+            if (!isComment) Box {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -305,7 +306,7 @@ fun PostInteractionBar(
             }
 
             // Bookmark
-            IconButton(
+            if (!isComment) IconButton(
                 onClick = onBookmarkClick,
                 modifier = Modifier.size(Sizes.IconLarge)
             ) {
