@@ -113,6 +113,7 @@ struct PostCardView: View {
                     icon: post.userReaction == .like ? "heart.fill" : "heart",
                     color: post.userReaction == .like ? .red : .secondary,
                     count: post.likesCount,
+                    accessibilityLabel: post.userReaction == .like ? "Unlike post" : "Like post",
                     action: onLike
                 )
 
@@ -120,6 +121,7 @@ struct PostCardView: View {
                     icon: "bubble.right",
                     color: .secondary,
                     count: post.commentsCount,
+                    accessibilityLabel: "Comment on post",
                     action: onComment
                 )
 
@@ -127,6 +129,7 @@ struct PostCardView: View {
                     icon: "arrow.2.squarepath",
                     color: post.isReshared ? .green : .secondary,
                     count: post.resharesCount,
+                    accessibilityLabel: post.isReshared ? "Unshare post" : "Share post",
                     action: onShare
                 )
 
@@ -136,6 +139,7 @@ struct PostCardView: View {
                     icon: post.isBookmarked ? "bookmark.fill" : "bookmark",
                     color: post.isBookmarked ? .blue : .secondary,
                     count: nil,
+                    accessibilityLabel: post.isBookmarked ? "Remove bookmark" : "Bookmark post",
                     action: onBookmark
                 )
             }
@@ -150,7 +154,7 @@ struct PostCardView: View {
     }
 
     @ViewBuilder
-    private func actionButton(icon: String, color: Color, count: Int?, action: @escaping () -> Void) -> some View {
+    private func actionButton(icon: String, color: Color, count: Int?, accessibilityLabel: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: AppTheme.Spacing.space4) {
                 Image(systemName: icon)
@@ -162,5 +166,6 @@ struct PostCardView: View {
             }
             .foregroundColor(color)
         }
+        .accessibilityLabel(accessibilityLabel)
     }
 }
