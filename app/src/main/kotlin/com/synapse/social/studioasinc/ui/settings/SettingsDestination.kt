@@ -19,6 +19,8 @@ sealed class SettingsDestination(val route: String) {
 
     object Language : SettingsDestination(ROUTE_LANGUAGE)
 
+    object Region : SettingsDestination(ROUTE_REGION)
+
     object About : SettingsDestination(ROUTE_ABOUT)
 
     object WhatsNew : SettingsDestination(ROUTE_WHATS_NEW)
@@ -100,6 +102,7 @@ sealed class SettingsDestination(val route: String) {
         const val ROUTE_BACKUP_RESTORE = "settings_backup_restore"
         const val ROUTE_STORAGE_PROVIDER = "settings_storage_provider"
         const val ROUTE_LANGUAGE = "settings_language"
+        const val ROUTE_REGION = "settings_region"
         const val ROUTE_ABOUT = "settings_about"
         const val ROUTE_WHATS_NEW = "settings_about_whats_new"
         const val ROUTE_FEEDBACK = "settings_about_feedback"
@@ -154,6 +157,7 @@ sealed class SettingsDestination(val route: String) {
             ROUTE_BACKUP_RESTORE -> BackupRestore
             ROUTE_STORAGE_PROVIDER -> StorageProvider
             ROUTE_LANGUAGE -> Language
+            ROUTE_REGION -> Region
             ROUTE_ABOUT -> About
             ROUTE_WHATS_NEW -> WhatsNew
             ROUTE_FEEDBACK -> Feedback
