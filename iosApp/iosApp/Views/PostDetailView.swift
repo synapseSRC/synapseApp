@@ -72,7 +72,14 @@ struct PostDetailView: View {
                                         Circle().fill(Color.secondary.opacity(0.3)).frame(width: 40, height: 40)
                                         Rectangle().fill(Color.secondary.opacity(0.5)).frame(width: 2).padding(.top, AppTheme.Spacing.space4)
                                     }
-                                    PostCardView(post: comment, onLike: {}, onComment: {}, onShare: {}, onBookmark: {}, onMoreOptions: {})
+                                    PostCardView(
+                                        post: comment,
+                                        onLike: { viewModel.toggleLike(for: comment) },
+                                        onComment: { /* Scroll to comment input */ },
+                                        onShare: { viewModel.toggleShare(for: comment) },
+                                        onBookmark: { viewModel.toggleBookmark(for: comment) },
+                                        onMoreOptions: { /* More options menu */ }
+                                    )
                                 }
                             }
                         }

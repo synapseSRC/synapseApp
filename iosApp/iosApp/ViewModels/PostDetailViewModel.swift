@@ -174,4 +174,74 @@ class PostDetailViewModel: ObservableObject {
         // This method exists to wire the share button to a no-op placeholder
         // that can be replaced with a real share implementation.
     }
+
+    func toggleLike(for comment: Post) {
+        guard let index = comments.firstIndex(where: { $0.id == comment.id }) else { return }
+        let c = comments[index]
+        comments[index] = Post(
+            id: c.id,
+            authorUid: c.authorUid,
+            postText: c.postText,
+            postImage: c.postImage,
+            postType: c.postType,
+            likesCount: c.userReaction == .like ? c.likesCount - 1 : c.likesCount + 1,
+            commentsCount: c.commentsCount,
+            viewsCount: c.viewsCount,
+            resharesCount: c.resharesCount,
+            mediaItems: c.mediaItems,
+            hasPoll: c.hasPoll,
+            pollQuestion: c.pollQuestion,
+            pollOptions: c.pollOptions,
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+            username: c.username,
+            displayName: c.displayName,
+            avatarUrl: c.avatarUrl,
+            isVerified: c.isVerified,
+            isBookmarked: c.isBookmarked,
+            isReshared: c.isReshared,
+            userReaction: c.userReaction == .like ? nil : .like,
+            reactions: c.reactions,
+            inReplyToPostId: c.inReplyToPostId,
+            rootPostId: c.rootPostId
+        )
+    }
+
+    func toggleBookmark(for comment: Post) {
+        guard let index = comments.firstIndex(where: { $0.id == comment.id }) else { return }
+        let c = comments[index]
+        comments[index] = Post(
+            id: c.id,
+            authorUid: c.authorUid,
+            postText: c.postText,
+            postImage: c.postImage,
+            postType: c.postType,
+            likesCount: c.likesCount,
+            commentsCount: c.commentsCount,
+            viewsCount: c.viewsCount,
+            resharesCount: c.resharesCount,
+            mediaItems: c.mediaItems,
+            hasPoll: c.hasPoll,
+            pollQuestion: c.pollQuestion,
+            pollOptions: c.pollOptions,
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+            username: c.username,
+            displayName: c.displayName,
+            avatarUrl: c.avatarUrl,
+            isVerified: c.isVerified,
+            isBookmarked: !c.isBookmarked,
+            isReshared: c.isReshared,
+            userReaction: c.userReaction,
+            reactions: c.reactions,
+            inReplyToPostId: c.inReplyToPostId,
+            rootPostId: c.rootPostId
+        )
+    }
+
+    func toggleShare(for comment: Post) {
+        // Share action is handled by presenting a share sheet in the view.
+        // This method exists to wire the share button to a no-op placeholder
+        // that can be replaced with a real share implementation.
+    }
 }
