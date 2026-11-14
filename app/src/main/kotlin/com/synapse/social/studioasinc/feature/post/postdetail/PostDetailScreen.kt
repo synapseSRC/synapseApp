@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -84,6 +85,7 @@ fun PostDetailScreen(
 
     var commentText by remember { mutableStateOf("") }
     var commentIsSending by remember { mutableStateOf(false) }
+    var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
 
     var showCommentOptions by remember { mutableStateOf<CommentWithUser?>(null) }
     var showReactionPickerForComment by remember { mutableStateOf<CommentWithUser?>(null) }
@@ -131,6 +133,7 @@ fun PostDetailScreen(
             }
             if (uiState.commentError == null) {
                 commentText = ""
+                selectedMediaUri = null
             }
             commentIsSending = false
             viewModel.clearCommentSubmission()
@@ -614,7 +617,9 @@ private fun PostDetailBottomBar(
             userDisplayName = uiState.currentUserDisplayName,
             replyToParticipants = uiState.replyToParticipants.map { it.username },
             onReplyingToClick = if (uiState.replyToParticipants.isNotEmpty()) onReplyingToClick else null,
-            focusRequester = focusRequester
+            focusRequester = focusRequester,
+            selectedMediaUri = selectedMediaUri,
+            onMediaUriChange = { selectedMediaUri = it }
         )
     }
 }
