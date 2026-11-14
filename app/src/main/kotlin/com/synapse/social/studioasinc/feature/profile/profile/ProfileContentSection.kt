@@ -486,9 +486,10 @@ internal fun ProfileContent(
                             onOpenMediaViewer(urls, idx)
                         }
                     },
-                    onOptionsClick = { /* Show options */ },
+                    onOptionsClick = { },
+                    showOptions = false,
                     onPollVote = { /* No polls in comments */ },
-                    onReactionSelected = { reaction -> /* Handle reaction */ },
+                    onReactionSelected = null,
                     onQuoteClick = { },
                     modifier = Modifier.padding(bottom = Spacing.space8)
                 )

@@ -43,6 +43,7 @@ fun PostHeader(
     timestamp: String,
     onUserClick: () -> Unit,
     onOptionsClick: () -> Unit,
+    showOptions: Boolean = true,
     taggedPeople: List<User> = emptyList(),
     feeling: FeelingActivity? = null,
     locationName: String? = null,
@@ -99,7 +100,7 @@ fun PostHeader(
                 )
             }
 
-            IconButton(
+            if (showOptions) IconButton(
                 onClick = onOptionsClick,
                 modifier = Modifier.size(Sizes.IconLarge)
             ) {
