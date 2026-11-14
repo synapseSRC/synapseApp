@@ -443,15 +443,7 @@ fun ChatDetailView(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("Search in chat") } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = { /* TODO: implement Search in chat */ }) {
-                            Icon(Icons.Default.Search, contentDescription = "Search in chat")
-                        }
-                    }
+                    Icon(Icons.Default.Search, contentDescription = "Search in chat")
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("More options") } },
