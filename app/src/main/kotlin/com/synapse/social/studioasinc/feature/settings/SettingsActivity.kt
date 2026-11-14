@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.synapse.social.studioasinc.shared.data.local.database.CachedConversationDao
 import com.synapse.social.studioasinc.shared.data.local.database.CachedMessageDao
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
+import com.synapse.social.studioasinc.data.repository.EditProfileRepositoryImpl
 import com.synapse.social.studioasinc.AuthActivity
 import com.synapse.social.studioasinc.feature.profile.ProfileEditActivity
 import com.synapse.social.studioasinc.ui.settings.AppearanceViewModel
@@ -38,6 +39,9 @@ class SettingsActivity : AppCompatActivity() {
 
     @Inject
     lateinit var authRepository: AuthRepository
+
+    @Inject
+    lateinit var editProfileRepository: EditProfileRepositoryImpl
 
     @Inject
     lateinit var cachedConversationDao: CachedConversationDao
@@ -90,7 +94,8 @@ class SettingsActivity : AppCompatActivity() {
                             },
                             onLogout = {
                                 performLogout()
-                            }
+                            },
+                            editProfileRepository = editProfileRepository
                         )
 
                         LaunchedEffect(initialDestination, settingsNavController) {

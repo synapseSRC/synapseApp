@@ -24,7 +24,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 @Composable
 fun LanguageRegionScreen(
     viewModel: LanguageRegionViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onNavigateToRegion: () -> Unit
 ) {
     val currentLanguageCode by viewModel.currentLanguage.collectAsState()
     val availableLanguages by viewModel.availableLanguages.collectAsState()
@@ -121,7 +122,7 @@ fun LanguageRegionScreen(
                         title = stringResource(R.string.settings_region_preferences_title),
                         subtitle = stringResource(R.string.settings_region_preferences_subtitle),
                         imageVector = Icons.Filled.Language,
-                        onClick = null,
+                        onClick = onNavigateToRegion,
                         enabled = !isLoading
                     )
                 }

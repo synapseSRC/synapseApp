@@ -1,6 +1,7 @@
 package com.synapse.social.studioasinc.ui.settings
 import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
+import kotlinx.coroutines.launch
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -19,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +31,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import com.synapse.social.studioasinc.data.repository.SettingsRepositoryImpl
+import com.synapse.social.studioasinc.data.repository.EditProfileRepositoryImpl
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.synapse.social.studioasinc.feature.blocking.BlockingViewModel
 import com.synapse.social.studioasinc.feature.blocking.ui.BlockedContactsScreen
@@ -43,7 +46,9 @@ fun SettingsNavHost(
     onBackClick: () -> Unit = {},
     onNavigateToProfileEdit: () -> Unit = {},
     onNavigateToChatPrivacy: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onNavigateToRegion: () -> Unit = {},
+    onLogout: () -> Unit = {},
+    editProfileRepository: EditProfileRepositoryImpl? = null
 ) {
     val context = LocalContext.current
     val settingsRepository = SettingsRepositoryImpl.getInstance(context)
@@ -573,6 +578,30 @@ fun SettingsNavHost(
             val viewModel: LanguageRegionViewModel = hiltViewModel()
             LanguageRegionScreen(
                 viewModel = viewModel,
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onNavigateToRegion = {
+                    navController.navigate(SettingsDestination.ROUTE_REGION)
+                }
+            )
+        }
+
+        composable(route = SettingsDestination.ROUTE_REGION) {
+            val scope = rememberCoroutineScope()
+            SelectRegionScreen(
+                currentRegion = "",
+                onRegionSelected = { region ->
+                    scope.launch {
+                        editProfileRepository?.let { repository ->
+                            val userId = repository.getCurrentUserId()
+                            if (userId != null) {
+                                repository.updateProfile(userId, mapOf("region" to region))
+                            }
+                        }
+                        navController.popBackStack()
+                    }
+                },
                 onBackClick = {
                     navController.popBackStack()
                 }
