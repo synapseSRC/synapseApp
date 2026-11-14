@@ -211,14 +211,14 @@ fun SettingsToggleItem(
         subtitle = subtitle,
         position = position,
         enabled = enabled,
-        onClick = { onCheckedChange(!checked) },
         leadingContent = imageVector?.let {
             {
                 SettingsIconBadge(imageVector = it)
             }
         },
         trailingContent = {
-            // ListItem merges this into the row, so the switch state is announced with the title.
+            // ListItem is not clickable here: only the Switch toggles, so a single tap yields a
+            // single toggle instead of a double toggle (row onClick + Switch onCheckedChange).
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
